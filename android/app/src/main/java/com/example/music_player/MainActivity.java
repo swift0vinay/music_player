@@ -50,7 +50,9 @@ public class MainActivity extends FlutterActivity {
                     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
                         if (call.method.equals("getMusic")) {
 //                            loadAlbums();
+                            channel.invokeMethod("onScanStart",true);
                             getAllSongs();
+                             channel.invokeMethod("onScanComplete",false);
                             result.success(songs);
                         } else if (call.method.equals("playMusic")) {
                             String url = call.argument("path");

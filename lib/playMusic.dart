@@ -22,6 +22,7 @@ class PlayMusic extends StatefulWidget {
   Function callBackToNext;
   Function callBackToStart;
   Function callBackToMode;
+  Function randomSong;
   Function callBackToDuration;
   Function nextSong;
   Function prevSong;
@@ -39,6 +40,7 @@ class PlayMusic extends StatefulWidget {
       this.callBackToDuration,
       this.callBackToPosition,
       this.callBackToStart,
+      this.randomSong,
       this.callBackToState,
       this.position,
       this.playerState,
@@ -193,7 +195,7 @@ class _PlayMusicState extends State<PlayMusic>
                     )),
           Container(
             width: width * 0.8,
-            height: h * 0.02,
+            height: h * 0.03,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -287,8 +289,7 @@ class _PlayMusicState extends State<PlayMusic>
                     if (this.widget.playMode != PlayMode.shuffle) {
                       newi = this.widget.nextSong(this.widget.index);
                     } else {
-                      Random random = new Random();
-                      newi = random.nextInt(this.widget.songs.length);
+                      newi = this.widget.randomSong();
                     }
                     setState(() {
                       this.widget.song = this.widget.songs[newi];
@@ -310,66 +311,63 @@ class _PlayMusicState extends State<PlayMusic>
               ],
             ),
           ),
-          divider(h),
           Expanded(
             child: Container(
               width: width,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.favorite_border),
-                      onPressed: () {},
-                      color: white.withOpacity(0.5),
-                    ),
-                    this.widget.playMode == PlayMode.loop
-                        ? IconButton(
-                            icon: Icon(Icons.repeat),
-                            onPressed: () {
-                              setState(() {
-                                this.widget.playMode = PlayMode.repeat;
-                              });
-                              this.widget.callBackToMode(this.widget.playMode);
-                            },
-                            color: white.withOpacity(0.5),
-                          )
-                        : this.widget.playMode == PlayMode.repeat
-                            ? IconButton(
-                                icon: Icon(Icons.repeat_one),
-                                onPressed: () {
-                                  setState(() {
-                                    this.widget.playMode = PlayMode.shuffle;
-                                  });
-                                  this
-                                      .widget
-                                      .callBackToMode(this.widget.playMode);
-                                },
-                                color: white.withOpacity(0.5),
-                              )
-                            : IconButton(
-                                icon: Icon(Icons.shuffle),
-                                onPressed: () {
-                                  setState(() {
-                                    this.widget.playMode = PlayMode.loop;
-                                  });
-                                  this
-                                      .widget
-                                      .callBackToMode(this.widget.playMode);
-                                },
-                                color: white.withOpacity(0.5),
-                              ),
-                    IconButton(
-                      icon: Icon(Icons.more_horiz),
-                      onPressed: () {},
-                      color: white.withOpacity(0.5),
-                    ),
-                  ],
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.favorite_border),
+                    onPressed: () {},
+                    color: white.withOpacity(0.5),
+                  ),
+                  this.widget.playMode == PlayMode.loop
+                      ? IconButton(
+                          icon: Icon(Icons.repeat),
+                          onPressed: () {
+                            setState(() {
+                              this.widget.playMode = PlayMode.repeat;
+                            });
+                            this.widget.callBackToMode(this.widget.playMode);
+                          },
+                          color: white.withOpacity(0.5),
+                        )
+                      : this.widget.playMode == PlayMode.repeat
+                          ? IconButton(
+                              icon: Icon(Icons.repeat_one),
+                              onPressed: () {
+                                setState(() {
+                                  this.widget.playMode = PlayMode.shuffle;
+                                });
+                                this
+                                    .widget
+                                    .callBackToMode(this.widget.playMode);
+                              },
+                              color: white.withOpacity(0.5),
+                            )
+                          : IconButton(
+                              icon: Icon(Icons.shuffle),
+                              onPressed: () {
+                                setState(() {
+                                  this.widget.playMode = PlayMode.loop;
+                                });
+                                this
+                                    .widget
+                                    .callBackToMode(this.widget.playMode);
+                              },
+                              color: white.withOpacity(0.5),
+                            ),
+                  IconButton(
+                    icon: Icon(Icons.more_horiz),
+                    onPressed: () {},
+                    color: white.withOpacity(0.5),
+                  ),
+                ],
               ),
             ),
-          )
+          ),
+          divider(h),
         ],
       ),
     );

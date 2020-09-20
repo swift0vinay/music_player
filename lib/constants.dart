@@ -7,3 +7,4 @@ Color grey = Colors.grey;
 Color mgrey = Colors.grey[850];
 enum PlayerState { stopped, playing, paused }
 enum PlayMode { repeat, loop, shuffle }
+ValueNotifier<bool> scanStart = new ValueNotifier(false);

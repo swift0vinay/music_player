@@ -7,8 +7,10 @@ import 'package:music_player/constants.dart';
 import 'package:music_player/detailsPage.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/MediaPlayer.dart';
+import 'package:music_player/loader.dart';
 import 'package:music_player/playMusic.dart';
 import 'package:music_player/previewLogo.dart';
+import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/songModel.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -119,6 +121,8 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // navigation bar color
         ));
     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: black,
@@ -149,89 +153,96 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           String s = '${artist.substring(0, 31)}...';
                           artist = s;
                         }
-                        return ListTile(
-                          onTap: played
-                              ? () async {
-                                  key.currentState.showBottomSheet((context) {
-                                    return PlayMusic(
-                                      callBackToNext: callBackToNext,
-                                      callBackToMode: callBackToMode,
-                                      playMode: playMode,
-                                      callBackToStart: callBackToStart,
-                                      callBackToDuration: callBackToDuration,
-                                      callBackToPosition: callBackToPosition,
-                                      start: start,
-                                      songs: songs,
-                                      index: playingIndex,
-                                      mediaPlayer: mediaPlayer,
-                                      song: playingSong,
-                                      playerState: playerState,
-                                      duration: duration == null
-                                          ? Duration(
-                                              milliseconds:
-                                                  playingSong.duration)
-                                          : duration,
-                                      position: position == null
-                                          ? Duration(milliseconds: 0)
-                                          : position,
-                                      callBackToState: callBackToState,
-                                      nextSong: nextSong,
-                                      prevSong: prevSong,
-                                    );
-                                  });
-                                }
-                              : () async {
-                                  startPlayer(songs[i], i);
-                                },
-                          title: played
-                              ? Text(
-                                  name,
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      color: orange,
-                                      fontWeight: FontWeight.bold),
-                                )
-                              : Text(
-                                  name,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: white,
-                                  ),
-                                ),
-                          subtitle: played
-                              ? Text(
-                                  artist,
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: orange,
-                                      fontWeight: FontWeight.bold),
-                                )
-                              : Text(
-                                  artist,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: white.withOpacity(0.5),
-                                  ),
-                                ),
-                          trailing: IconButton(
-                            icon: Icon(
-                              Icons.more_horiz,
-                              color: white.withOpacity(0.5),
-                            ),
-                            onPressed: () {
-                              myBottomSheet(context, songs[i]);
-                            },
-                          ),
-                        );
+                        return musicTile(played, i, name, artist, context);
                       },
                     ),
                   )),
-                  bottomContainer(height)
+                  bottomContainer(height, width)
                 ],
               )
             : Center(
                 child: CircularProgressIndicator(),
               ),
+      ),
+    );
+  }
+
+  InkWell musicTile(
+      bool played, int i, String name, String artist, BuildContext context) {
+    return InkWell(
+      onTap: played
+          ? () async {
+              showPlayer();
+            }
+          : () async {
+              startPlayer(songs[i], i);
+            },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                played
+                    ? Text(
+                        name,
+                        style: TextStyle(
+                            fontSize: 15,
+                            color: orange,
+                            fontWeight: FontWeight.bold),
+                      )
+                    : Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: white,
+                        ),
+                      ),
+                SizedBox(
+                  height: 5.0,
+                ),
+                played
+                    ? Text(
+                        artist,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: orange,
+                            fontWeight: FontWeight.bold),
+                      )
+                    : Text(
+                        artist,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: white.withOpacity(0.5),
+                        ),
+                      ),
+              ],
+            ),
+            Expanded(
+              child: Container(),
+            ),
+            Row(
+              children: [
+                played
+                    ? (playerState == PlayerState.playing
+                        ? Loader1()
+                        : Container())
+                    : Container(),
+                IconButton(
+                  icon: Icon(
+                    Icons.more_horiz,
+                    color: white.withOpacity(0.5),
+                  ),
+                  onPressed: () {
+                    myBottomSheet(context, songs[i]);
+                  },
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -278,16 +289,21 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 if (val == 1) {
                   print('hello seleceted');
                 } else if (val == 0) {
-                  print('hello seleceted');
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => ScanMusic()));
                 }
               },
+              color: black,
               itemBuilder: (context) => <PopupMenuEntry<int>>[
                     PopupMenuItem<int>(
-                      child: Text('Scan For Songs'),
+                      child: Text(
+                        'Scan For Songs',
+                        style: TextStyle(color: white),
+                      ),
                       value: 0,
                     ),
                     PopupMenuItem<int>(
-                      child: Text('About'),
+                      child: Text('About', style: TextStyle(color: white)),
                       value: 1,
                     )
                   ]),
@@ -303,7 +319,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     print(playMode);
   }
 
-  InkWell bottomContainer(double height) {
+  InkWell bottomContainer(double height, double width) {
     String name = playingSong.title;
     String artist = playingSong.artist;
     if (name.length > 24) {
@@ -316,50 +332,26 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
     return InkWell(
         onTap: () {
-          showModalBottomSheet(
-              context: context,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0)),
-              ),
-              isScrollControlled: true,
-              builder: (context) {
-                return PlayMusic(
-                  callBackToNext: callBackToNext,
-                  callBackToMode: callBackToMode,
-                  playMode: playMode,
-                  callBackToStart: callBackToStart,
-                  callBackToDuration: callBackToDuration,
-                  callBackToPosition: callBackToPosition,
-                  start: start,
-                  songs: songs,
-                  index: playingIndex,
-                  mediaPlayer: mediaPlayer,
-                  song: playingSong,
-                  playerState: playerState,
-                  duration: duration == null
-                      ? Duration(milliseconds: playingSong.duration)
-                      : duration,
-                  position:
-                      position == null ? Duration(milliseconds: 0) : position,
-                  callBackToState: callBackToState,
-                  nextSong: nextSong,
-                  prevSong: prevSong,
-                );
-              });
+          showPlayer();
         },
         child: Container(
-            height: height * 0.08,
-            decoration: BoxDecoration(
-                color: mgrey,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.0),
-                    topRight: Radius.circular(20.0))),
-            padding: EdgeInsets.only(bottom: 10.0),
-            child: ListTile(
-                dense: true,
-                leading: ClipRRect(
+          height: height * 0.08,
+          width: width,
+          decoration: BoxDecoration(
+              color: mgrey,
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20.0),
+                  topRight: Radius.circular(20.0))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: width * 0.05,
+              ),
+              SizedBox(
+                width: width * 0.1,
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(10.0),
                   child: SizedBox(
                     height: height * 0.05,
@@ -372,10 +364,29 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           ),
                   ),
                 ),
-                title: Text(name, style: TextStyle(fontSize: 15, color: white)),
-                subtitle:
+              ),
+              SizedBox(
+                width: width * 0.05,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(name, style: TextStyle(fontSize: 15, color: white)),
+                    SizedBox(
+                      height: 5.0,
+                    ),
                     Text(artist, style: TextStyle(fontSize: 13, color: white)),
-                trailing: GestureDetector(
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: width * 0.05,
+              ),
+              SizedBox(
+                width: width * 0.1,
+                child: GestureDetector(
                   onTap: () {
                     playerState == PlayerState.playing ? pause() : resume();
                   },
@@ -385,7 +396,61 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     color: white,
                     size: 25,
                   ),
-                ))));
+                ),
+              ),
+              SizedBox(
+                width: width * 0.05,
+              ),
+            ],
+          ),
+        ));
+  }
+
+  Future showPlayer() {
+    return showModalBottomSheet(
+        context: context,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
+        ),
+        isScrollControlled: true,
+        builder: (context) {
+          return PlayMusic(
+            randomSong: randomSong,
+            callBackToNext: callBackToNext,
+            callBackToMode: callBackToMode,
+            playMode: playMode,
+            callBackToStart: callBackToStart,
+            callBackToDuration: callBackToDuration,
+            callBackToPosition: callBackToPosition,
+            start: start,
+            songs: songs,
+            index: playingIndex,
+            mediaPlayer: mediaPlayer,
+            song: playingSong,
+            playerState: playerState,
+            duration: duration == null
+                ? Duration(milliseconds: playingSong.duration)
+                : duration,
+            position: position == null ? Duration(milliseconds: 0) : position,
+            callBackToState: callBackToState,
+            nextSong: nextSong,
+            prevSong: prevSong,
+          );
+        });
+  }
+
+  int randomSong() {
+    Random random = new Random();
+    int newi = random.nextInt(songs.length);
+    setState(() {
+      if (start) {
+        start = false;
+      }
+      playingIndex = newi;
+      playingSong = songs[newi];
+    });
+    return newi;
   }
 
   int nextSong(int i) {

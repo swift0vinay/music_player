@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/songModel.dart';
 
+import 'constants.dart';
+
 typedef void TimeChangeHandler(Duration duration);
 typedef void ErrorHandler(String message);
 
@@ -18,6 +20,9 @@ class MediaPlayer {
 
   Future<List<Song>> getMusic() async {
     try {
+      await Future.delayed(Duration(milliseconds: 1)).then((value) {
+        scanStart.value = true;
+      });
       List<Song> songs = new List();
       final Map<String, dynamic> rs =
           Map.from(await myChannel.invokeMethod('getMusic'));
@@ -105,6 +110,21 @@ class MediaPlayer {
 
   Future platformCallHandler(MethodCall call) async {
     switch (call.method) {
+      case "onScanStart":
+        {
+          print(call.arguments);
+          // scanStart.value = call.arguments;
+          print('00000000000000000000000000000000000${scanStart.value}');
+          break;
+        }
+      case "onScanComplete":
+        {
+          print(call.arguments);
+          scanStart.value = call.arguments;
+          print('00000000000000000000000000000000000${scanStart.value}');
+
+          break;
+        }
       case "audio.onDuration":
         {
           final duration = Duration(milliseconds: call.arguments);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/homePage.dart';
+import 'package:music_player/loader.dart';
 
 typedef void TimeChangeHandler(Duration duration);
 typedef void ErrorHandler(String message);
