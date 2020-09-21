@@ -107,6 +107,16 @@ class Loader1 extends StatelessWidget {
   }
 }
 
+class Loader2 extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return TestFile(
+      color: Colors.lightGreen,
+      size: 30.0,
+    );
+  }
+}
+
 class Temp extends StatelessWidget {
   final int size;
   Temp({this.size});

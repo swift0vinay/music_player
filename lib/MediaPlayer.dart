@@ -17,19 +17,30 @@ class MediaPlayer {
   MediaPlayer() {
     myChannel.setMethodCallHandler(platformCallHandler);
   }
+  Future<void> getData() async {
+    try {
+      await myChannel.invokeMethod('getData');
+    } on PlatformException catch (e) {
+      print(e);
+      return null;
+    }
+  }
 
   Future<List<Song>> getMusic() async {
     try {
-      await Future.delayed(Duration(milliseconds: 1)).then((value) {
-        scanStart.value = true;
-      });
       List<Song> songs = new List();
-      final Map<String, dynamic> rs =
-          Map.from(await myChannel.invokeMethod('getMusic'));
-      rs.forEach((key, value) {
-        Song song = new Song.fromMap(Map.from(value));
-        songs.add(song);
+      // await Future.delayed(Duration(seconds: 3));
+
+      await myChannel.invokeMethod('getMusic').then((value) {
+        Map<String, dynamic> rs = Map.from(value);
+        rs.forEach((key, value) {
+          Song song = Song.fromMap(Map.from(value));
+          songs.add(song);
+        });
+      }).catchError((e) {
+        print(e.toString());
       });
+
       return songs;
     } on PlatformException catch (e) {
       print(e);
@@ -110,17 +121,19 @@ class MediaPlayer {
 
   Future platformCallHandler(MethodCall call) async {
     switch (call.method) {
-      case "onScanStart":
-        {
-          print(call.arguments);
-          // scanStart.value = call.arguments;
-          print('00000000000000000000000000000000000${scanStart.value}');
-          break;
-        }
+      // case "onScanStart":
+      //   {
+      //     print(call.arguments);
+      //     String name = call.arguments;
+      //     nameHandler(name);
+      //     scanStart.value = call.arguments;
+      //     break;
+      //   }
       case "onScanComplete":
         {
           print(call.arguments);
-          scanStart.value = call.arguments;
+
+          // scanStart.value = call.arguments;
           print('00000000000000000000000000000000000${scanStart.value}');
 
           break;

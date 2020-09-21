@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,8 +12,10 @@ import android.media.AudioAttributes;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -50,10 +53,23 @@ public class MainActivity extends FlutterActivity {
                     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
                         if (call.method.equals("getMusic")) {
 //                            loadAlbums();
-                            channel.invokeMethod("onScanStart",true);
-                            getAllSongs();
-                             channel.invokeMethod("onScanComplete",false);
-                            result.success(songs);
+                            MethodChannel.Result rs = new MethodResultWrapper(result);
+                            new AsyncTask<Void, Void, Void>() {
+                                @Override
+                                protected Void doInBackground(Void... params) {
+                                    getAllSongs();
+                                    rs.success(songs);
+                                    return null;
+                                }
+
+                                @Override
+                                protected void onPostExecute(Void result) {
+                                    super.onPostExecute(result);
+                                }
+                            }.execute();
+//                            getAllSongs();
+//                            channel.invokeMethod("onScanComplete", false);
+//                            result.success(songs);
                         } else if (call.method.equals("playMusic")) {
                             String url = call.argument("path");
 //                            long id = Long.parseLong(url);
@@ -79,6 +95,46 @@ public class MainActivity extends FlutterActivity {
                 }
 
         );
+    }
+
+    private static class MethodResultWrapper implements MethodChannel.Result {
+        private MethodChannel.Result methodResult;
+        private Handler handler;
+
+        MethodResultWrapper(MethodChannel.Result result) {
+            methodResult = result;
+            handler = new Handler(Looper.getMainLooper());
+        }
+
+        @Override
+        public void success(final Object result) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    methodResult.success(result);
+                }
+            });
+        }
+
+        @Override
+        public void error(final String errorCode, final String errorMessage, final Object errorDetails) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    methodResult.error(errorCode, errorMessage, errorDetails);
+                }
+            });
+        }
+
+        @Override
+        public void notImplemented() {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    methodResult.notImplemented();
+                }
+            });
+        }
     }
 
     private void seek(double position) {
@@ -155,7 +211,7 @@ public class MainActivity extends FlutterActivity {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
 //                stop();
-                Log.w("completed","song completed");  
+                Log.w("completed", "song completed");
                 channel.invokeMethod("audio.onComplete", true);
             }
         });
@@ -163,7 +219,7 @@ public class MainActivity extends FlutterActivity {
                 new MediaPlayer.OnErrorListener() {
                     @Override
                     public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
-                        Log.w("asfsfkbakjfbkjjjkfkj","error encountered");
+                        Log.w("asfsfkbakjfbkjjjkfkj", "error encountered");
                         channel.invokeMethod("audio.onError", String.format("{\"what\":%d,\"extra\":%d}", what, extra));
                         return false;
                     }
@@ -322,6 +378,29 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
+//    private void scanMusicFiles(File[] files) {
+//        for (File file: files) {
+//          if (file.isDirectory())  {
+//            scanMusicFiles(file.listFiles());
+//          } else {
+//            activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://"
+//                    + file.getAbsolutePath())));
+//          }
+//        }
+//      }
+//
+//      ArrayList<HashMap> scanData() {
+//        ContentResolver content=getContentResolver();
+//        scanMusicFiles(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).listFiles());
+//        mf.prepare();
+//        List<MusicFinder.Song> allsongs = mf.getAllSongs();
+//        ArrayList<HashMap> songsMap = new ArrayList<>();
+//        for (MusicFinder.Song s : allsongs) {
+//          songsMap.add(s.toMap());
+//        }
+//        return songsMap;
+//      }
+
     class Song {
         long id;
         String title;
@@ -468,24 +547,3 @@ public class MainActivity extends FlutterActivity {
 
 
 }
-//
-//
-//    private void loadAudioPaths() {
-//        ContentResolver contentResolver = getContentResolver();
-//        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-//        String[] projections = {MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA};
-//        Cursor cursor = contentResolver.query(uri, projections, null, null, null);
-//        int length = cursor.getCount();
-//        int idIndex = cursor.getColumnIndex(MediaStore.Audio.Media._ID);
-//        int pathIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-//        for (int i = 0; i < length; i++) {
-//            if (cursor.moveToNext()) {
-//                long id = cursor.getLong(idIndex);
-//                String songPath = cursor.getString(pathIndex);
-//                audioPaths.put(id, songPath);
-//            } else {
-//                break;
-//            }
-//        }
-//        cursor.close();
-//    }

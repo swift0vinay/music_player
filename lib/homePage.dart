@@ -161,7 +161,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 ],
               )
             : Center(
-                child: CircularProgressIndicator(),
+                child: Loader2(),
               ),
       ),
     );

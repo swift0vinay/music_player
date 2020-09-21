@@ -31,6 +31,8 @@ dependencies:
   permission_handler: ^5.0.1+1
   animated_splash_screen: ^1.0.1
   shared_preferences: ^0.5.10
+  progress_dialog: ^1.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
