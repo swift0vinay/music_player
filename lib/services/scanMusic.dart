@@ -7,6 +7,9 @@ import 'package:music_player/songModel.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
 class ScanMusic extends StatefulWidget {
+  MediaPlayer mediaPlayer;
+  Function callBackToScan;
+  ScanMusic({this.mediaPlayer, this.callBackToScan});
   @override
   _ScanMusicState createState() => _ScanMusicState();
 }
@@ -14,7 +17,6 @@ class ScanMusic extends StatefulWidget {
 class _ScanMusicState extends State<ScanMusic> {
   bool running = false;
   ProgressDialog pr;
-  MediaPlayer mediaPlayer;
   List<Song> songs;
   bool scan = false;
   @override
@@ -63,8 +65,10 @@ class _ScanMusicState extends State<ScanMusic> {
           children: [
             RaisedButton(
               onPressed: () async {
+                await this.widget.mediaPlayer.stopSong();
+                this.widget.callBackToScan();
                 await pr.show();
-                songs = await MediaPlayer().getMusic();
+                songs = await this.widget.mediaPlayer.getMusic();
                 await pr.hide();
                 setState(() {
                   scan = true;

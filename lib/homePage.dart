@@ -247,6 +247,12 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  callBackToStop() {
+    setState(() {
+      playerState = PlayerState.stopped;
+    });
+  }
+
   callBackToDuration(Duration d) {
     setState(() {
       duration = d;
@@ -289,8 +295,13 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 if (val == 1) {
                   print('hello seleceted');
                 } else if (val == 0) {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => ScanMusic()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ScanMusic(
+                                mediaPlayer: mediaPlayer,
+                                callBackToScan: callBackToScan,
+                              )));
                 }
               },
               color: black,
@@ -477,6 +488,17 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
     // await startPlayer(songs[newi], newi);
     return newi;
+  }
+
+  callBackToScan() {
+    if (playerState == PlayerState.playing) {
+      setState(() {
+        start = true;
+        _animationController.reverse();
+        playerState = PlayerState.paused;
+        print('pause $position');
+      });
+    }
   }
 
   callBackToState(PlayerState pp, Duration d, Duration p) {
