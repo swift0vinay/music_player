@@ -13,113 +13,71 @@ import 'package:music_player/previewLogo.dart';
 import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/songModel.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHome extends StatefulWidget {
+  List<Song> songs;
+  AnimationController animationController;
+  Duration duration;
+  Duration position;
+  Song playingSong;
+  bool start;
+  bool play;
+  int playingIndex;
+  MediaPlayer mediaPlayer;
+  PlayerState playerState;
+  bool listfetched;
+  Function callBackToUpdateSong;
+  PlayMode playMode;
+  Function anothercallBackToNext;
+  Function anothercallBackToState;
+  Function anothercallBackToStart;
+  Function anothercallBackToStop;
+  Function anothercallBackToDuration;
+  Function anothercallBackToPosition;
+  Function anothercallBackToMode;
+  MyHome({
+    this.start,
+    this.listfetched,
+    this.play,
+    this.anothercallBackToDuration,
+    this.anothercallBackToMode,
+    this.anothercallBackToNext,
+    this.callBackToUpdateSong,
+    this.anothercallBackToPosition,
+    this.anothercallBackToStart,
+    this.anothercallBackToState,
+    this.anothercallBackToStop,
+    this.songs,
+    this.animationController,
+    this.duration,
+    this.mediaPlayer,
+    this.playMode,
+    this.playerState,
+    this.playingIndex,
+    this.playingSong,
+    this.position,
+  });
   @override
   _MyHomeState createState() => _MyHomeState();
 }
 
 class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   final key = GlobalKey<ScaffoldState>();
-  final Permission _permission = Permission.storage;
-  List<String> files = new List();
-  List<Song> songs = new List<Song>();
-  PermissionStatus _permissionStatus = PermissionStatus.undetermined;
-  bool start = true;
-  bool play = true;
-  Duration duration;
-  Duration position;
-  Song playingSong;
-  int playingIndex;
-  PlayerState playerState;
-  PlayMode playMode;
-  ScrollController scrollController;
-  MediaPlayer mediaPlayer;
-  bool listfetched = false;
-  AnimationController _animationController;
-
-  void _listenForPermissionStatus() async {
-    final status = await _permission.status;
-    setState(() => _permissionStatus = status);
-  }
-
-  Future<void> requestPermission(Permission permission) async {
-    final status = await permission.request();
-
-    setState(() {
-      print('request $status');
-      _permissionStatus = status;
-      print('request $_permissionStatus');
-    });
-  }
-
-  getPermission() async {
-    await requestPermission(_permission);
-    if (_permissionStatus.isDenied) {
-      key.currentState.showSnackBar(SnackBar(
-        content: Text("Permission Required Restart the App"),
-      ));
-    } else {
-      playerState = PlayerState.stopped;
-      playMode = PlayMode.loop;
-      mediaPlayer = new MediaPlayer();
-      _animationController = AnimationController(
-          vsync: this, duration: Duration(milliseconds: 300));
-      getAllMusic();
-    }
-  }
-
+  SharedPreferences sharedPreferences;
   @override
   void initState() {
     super.initState();
-    _listenForPermissionStatus();
-    getPermission();
-    scrollController = new ScrollController();
+    initSp();
+    // scrollController = new ScrollController();
   }
 
-  getAllMusic() async {
-    songs = await mediaPlayer.getMusic();
-    songs.sort((a, b) {
-      if ((a.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
-              a.title[0].codeUnitAt(0) <= ('z'.codeUnitAt(0))) ||
-          (a.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0)) &&
-              a.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0)))) {
-        if ((b.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
-                b.title[0].codeUnitAt(0) <= 'z'.codeUnitAt(0)) ||
-            (b.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0))) &&
-                b.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0))) {
-          return a.title.compareTo(b.title);
-        } else {
-          return -1;
-        }
-      } else {
-        if ((b.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
-                b.title[0].codeUnitAt(0) <= ('z'.codeUnitAt(0))) ||
-            (b.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0)) &&
-                b.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0)))) {
-          return 1;
-        } else {
-          return a.title.compareTo(b.title);
-        }
-      }
-    });
-    setState(() {
-      listfetched = true;
-      if (playingSong == null) {
-        playingSong = songs[0];
-        playingIndex = 0;
-      }
-    });
+  initSp() async {
+    sharedPreferences = await SharedPreferences.getInstance();
   }
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        systemNavigationBarColor: black,
-        statusBarColor: black,
-        systemNavigationBarIconBrightness: Brightness.light
-        // navigation bar color
-        ));
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
 
@@ -127,23 +85,23 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       child: Scaffold(
         backgroundColor: black,
         key: key,
-        body: listfetched
+        body: this.widget.listfetched
             ? Column(
                 children: [
-                  topContainer(height),
                   Expanded(
                       child: Scrollbar(
-                    controller: scrollController,
                     child: ListView.builder(
-                      controller: scrollController,
                       shrinkWrap: true,
-                      itemCount: songs.length,
+                      itemCount: this.widget.songs.length,
                       itemBuilder: (context, i) {
-                        String name = songs[i].title;
-                        String artist = songs[i].artist;
+                        String name = this.widget.songs[i].title;
+                        String artist = this.widget.songs[i].artist;
                         bool played = false;
-                        if (playingSong != null) {
-                          played = songs[i].id == playingSong.id ? true : false;
+                        if (this.widget.playingSong != null) {
+                          played = this.widget.songs[i].id ==
+                                  this.widget.playingSong.id
+                              ? true
+                              : false;
                         }
                         if (name.length > 27) {
                           String s = '${name.substring(0, 28)}...';
@@ -157,12 +115,9 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       },
                     ),
                   )),
-                  bottomContainer(height, width)
                 ],
               )
-            : Center(
-                child: Loader2(),
-              ),
+            : Loader2(),
       ),
     );
   }
@@ -175,7 +130,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               showPlayer();
             }
           : () async {
-              startPlayer(songs[i], i);
+              startPlayer(this.widget.songs[i], i);
             },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
@@ -226,7 +181,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Row(
               children: [
                 played
-                    ? (playerState == PlayerState.playing
+                    ? (this.widget.playerState == PlayerState.playing
                         ? Loader1()
                         : Container())
                     : Container(),
@@ -236,7 +191,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     color: white.withOpacity(0.5),
                   ),
                   onPressed: () {
-                    myBottomSheet(context, songs[i]);
+                    myBottomSheet(context, this.widget.songs[i]);
                   },
                 ),
               ],
@@ -245,176 +200,6 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  callBackToStop() {
-    setState(() {
-      playerState = PlayerState.stopped;
-    });
-  }
-
-  callBackToDuration(Duration d) {
-    setState(() {
-      duration = d;
-    });
-  }
-
-  callBackToPosition(Duration p) {
-    setState(() {
-      position = p;
-    });
-  }
-
-  Container topContainer(double height) {
-    return Container(
-      height: height * 0.08,
-      decoration: BoxDecoration(
-        color: black,
-        // borderRadius: BorderRadius.only(
-        //   bottomRight: Radius.circular(20.0),
-        //   bottomLeft: Radius.circular(20.0),
-        // ),f
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          IconButton(
-            icon: Icon(
-              Icons.search,
-              color: orange,
-            ),
-            color: white,
-            onPressed: () {},
-          ),
-          PopupMenuButton(
-              icon: Icon(
-                Icons.more_vert,
-                color: orange,
-              ),
-              onSelected: (val) {
-                if (val == 1) {
-                  print('hello seleceted');
-                } else if (val == 0) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ScanMusic(
-                                mediaPlayer: mediaPlayer,
-                                callBackToScan: callBackToScan,
-                              )));
-                }
-              },
-              color: black,
-              itemBuilder: (context) => <PopupMenuEntry<int>>[
-                    PopupMenuItem<int>(
-                      child: Text(
-                        'Scan For Songs',
-                        style: TextStyle(color: white),
-                      ),
-                      value: 0,
-                    ),
-                    PopupMenuItem<int>(
-                      child: Text('About', style: TextStyle(color: white)),
-                      value: 1,
-                    )
-                  ]),
-        ],
-      ),
-    );
-  }
-
-  callBackToMode(PlayMode pm) {
-    setState(() {
-      playMode = pm;
-    });
-    print(playMode);
-  }
-
-  InkWell bottomContainer(double height, double width) {
-    String name = playingSong.title;
-    String artist = playingSong.artist;
-    if (name.length > 24) {
-      String s = '${name.substring(0, 25)}...';
-      name = s;
-    }
-    if (artist.length > 31) {
-      String s = '${artist.substring(0, 30)}...';
-      artist = s;
-    }
-    return InkWell(
-        onTap: () {
-          showPlayer();
-        },
-        child: Container(
-          height: height * 0.08,
-          width: width,
-          decoration: BoxDecoration(
-              color: mgrey,
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20.0),
-                  topRight: Radius.circular(20.0))),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: width * 0.05,
-              ),
-              SizedBox(
-                width: width * 0.1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: SizedBox(
-                    height: height * 0.05,
-                    width: height * 0.05,
-                    child: playingSong.albumArt == ''
-                        ? PreviewLogo(home: true)
-                        : Image.file(
-                            File('${playingSong.albumArt}'),
-                            fit: BoxFit.cover,
-                          ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(name, style: TextStyle(fontSize: 15, color: white)),
-                    SizedBox(
-                      height: 5.0,
-                    ),
-                    Text(artist, style: TextStyle(fontSize: 13, color: white)),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-              SizedBox(
-                width: width * 0.1,
-                child: GestureDetector(
-                  onTap: () {
-                    playerState == PlayerState.playing ? pause() : resume();
-                  },
-                  child: AnimatedIcon(
-                    icon: AnimatedIcons.play_pause,
-                    progress: _animationController,
-                    color: white,
-                    size: 25,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-            ],
-          ),
-        ));
   }
 
   Future showPlayer() {
@@ -430,20 +215,22 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             randomSong: randomSong,
             callBackToNext: callBackToNext,
             callBackToMode: callBackToMode,
-            playMode: playMode,
+            playMode: this.widget.playMode,
             callBackToStart: callBackToStart,
             callBackToDuration: callBackToDuration,
             callBackToPosition: callBackToPosition,
-            start: start,
-            songs: songs,
-            index: playingIndex,
-            mediaPlayer: mediaPlayer,
-            song: playingSong,
-            playerState: playerState,
-            duration: duration == null
-                ? Duration(milliseconds: playingSong.duration)
-                : duration,
-            position: position == null ? Duration(milliseconds: 0) : position,
+            start: this.widget.start,
+            songs: this.widget.songs,
+            index: this.widget.playingIndex,
+            mediaPlayer: this.widget.mediaPlayer,
+            song: this.widget.playingSong,
+            playerState: this.widget.playerState,
+            duration: this.widget.duration == null
+                ? Duration(milliseconds: this.widget.playingSong.duration)
+                : this.widget.duration,
+            position: this.widget.position == null
+                ? Duration(milliseconds: 0)
+                : this.widget.position,
             callBackToState: callBackToState,
             nextSong: nextSong,
             prevSong: prevSong,
@@ -451,102 +238,138 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         });
   }
 
+  callBackToStop() {
+    setState(() {
+      this.widget.playerState = PlayerState.stopped;
+    });
+    this.widget.anothercallBackToStop();
+  }
+
+  callBackToDuration(Duration d) {
+    setState(() {
+      this.widget.duration = d;
+    });
+    this.widget.anothercallBackToDuration(d);
+  }
+
+  callBackToPosition(Duration p) {
+    setState(() {
+      this.widget.position = p;
+    });
+    this.widget.anothercallBackToPosition(p);
+  }
+
+  callBackToMode(PlayMode pm) {
+    setState(() {
+      this.widget.playMode = pm;
+    });
+    print(this.widget.playMode);
+  }
+
+  callBackToState(PlayerState pp, Duration d, Duration p) {
+    setState(() {
+      this.widget.playerState = pp;
+      if (this.widget.start) {
+        this.widget.start = false;
+      }
+      if (this.widget.playerState == PlayerState.playing) {
+        this.widget.animationController.forward();
+      } else {
+        this.widget.animationController.reverse();
+      }
+      this.widget.duration = d;
+      this.widget.position = p;
+    });
+    this.widget.anothercallBackToState();
+  }
+
+  callBackToStart() {
+    setState(() {
+      this.widget.start = false;
+    });
+    this.widget.anothercallBackToStart();
+  }
+
+  callBackToNext(int i) {
+    setState(() {
+      this.widget.playingIndex = i;
+      this.widget.playingSong = this.widget.songs[i];
+    });
+    this.widget.anothercallBackToNext();
+
+    print('callBackCallerd');
+  }
+
   int randomSong() {
     Random random = new Random();
-    int newi = random.nextInt(songs.length);
+    int newi = random.nextInt(this.widget.songs.length);
     setState(() {
-      if (start) {
-        start = false;
+      if (this.widget.start) {
+        this.widget.start = false;
       }
-      playingIndex = newi;
-      playingSong = songs[newi];
+      this.widget.playingIndex = newi;
+      this.widget.playingSong = this.widget.songs[newi];
     });
     return newi;
   }
 
   int nextSong(int i) {
-    int newi = (i + 1) % songs.length;
+    int newi = (i + 1) % this.widget.songs.length;
     setState(() {
-      if (start) {
-        start = false;
+      if (this.widget.start) {
+        this.widget.start = false;
       }
-      playingIndex = newi;
-      playingSong = songs[newi];
+      this.widget.playingIndex = newi;
+      this.widget.playingSong = this.widget.songs[newi];
     });
-    // await startPlayer(songs[newi], newi);
+    // await startPlayer(this.widget.songs[newi], newi);
     return newi;
   }
 
   int prevSong(int i) {
-    int newi = (i - 1) % songs.length;
+    int newi = (i - 1) % this.widget.songs.length;
     setState(() {
-      if (start) {
-        start = false;
+      if (this.widget.start) {
+        this.widget.start = false;
       }
-      playingIndex = newi;
-      playingSong = songs[newi];
+      this.widget.playingIndex = newi;
+      this.widget.playingSong = this.widget.songs[newi];
     });
-    // await startPlayer(songs[newi], newi);
+    // await startPlayer(this.widget.songs[newi], newi);
     return newi;
   }
 
-  callBackToScan() {
-    if (playerState == PlayerState.playing) {
-      setState(() {
-        start = true;
-        _animationController.reverse();
-        playerState = PlayerState.paused;
-        print('pause $position');
-      });
-    }
-  }
-
-  callBackToState(PlayerState pp, Duration d, Duration p) {
-    setState(() {
-      playerState = pp;
-      if (start) {
-        start = false;
-      }
-      if (playerState == PlayerState.playing) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-      duration = d;
-      position = p;
-    });
-  }
-
   pause() async {
-    int rs = await mediaPlayer.pauseSong();
+    int rs = await this.widget.mediaPlayer.pauseSong();
     if (rs == 1) {
       setState(() {
-        if (start) {
-          start = false;
+        if (this.widget.start) {
+          this.widget.start = false;
         }
-        _animationController.reverse();
-        playerState = PlayerState.paused;
-        print('pause $position');
+        this.widget.animationController.reverse();
+        this.widget.playerState = PlayerState.paused;
+        print('pause $this.widget.position');
       });
     }
   }
 
   resume() async {
-    if (start) {
-      startPlayer(songs[0], 0);
+    if (this.widget.start) {
+      startPlayer(this.widget.playingSong, this.widget.playingIndex);
+      await sharedPreferences.setInt("lastSong", this.widget.playingSong.id);
       setState(() {
-        start = false;
+        this.widget.start = false;
       });
     } else {
-      int rs = await mediaPlayer.resumeSong();
+      int rs = await this.widget.mediaPlayer.resumeSong();
       if (rs == 1) {
         setState(() {
-          _animationController.forward();
-          playerState = PlayerState.playing;
-          if (start) {
-            start = false;
+          this.widget.animationController.forward();
+          this.widget.playerState = PlayerState.playing;
+          if (this.widget.start) {
+            this.widget.start = false;
           }
-          print('resume $position');
+          print('resume $this.widget.position');
         });
         setHandlers();
       }
@@ -554,43 +377,44 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   setHandlers() {
-    mediaPlayer.setDurationHandler((d) {
+    this.widget.mediaPlayer.setDurationHandler((d) {
       setState(() {
-        duration = d;
+        this.widget.duration = d;
       });
     });
-    mediaPlayer.setPositionHandler((p) {
+    this.widget.mediaPlayer.setPositionHandler((p) {
       setState(() {
-        position = p;
-        print('position1 is $p');
+        this.widget.position = p;
+        print('this.widget.position1 is $p');
       });
     });
-    mediaPlayer.setCompletionHandler(() async {
+    this.widget.mediaPlayer.setCompletionHandler(() async {
       setState(() {
         int newi;
-        if (playMode == PlayMode.loop) {
-          newi = nextSong(playingIndex);
-        } else if (playMode == PlayMode.repeat) {
-          newi = playingIndex;
+        if (this.widget.playMode == PlayMode.loop) {
+          newi = nextSong(this.widget.playingIndex);
+        } else if (this.widget.playMode == PlayMode.repeat) {
+          newi = this.widget.playingIndex;
         } else {
           Random random = new Random();
-          newi = random.nextInt(songs.length);
+          newi = random.nextInt(this.widget.songs.length);
         }
         print('new jsfkafk is $newi');
-        playingSong = songs[newi];
-        playingIndex = newi;
+        this.widget.playingSong = this.widget.songs[newi];
+        this.widget.playingIndex = newi;
       });
       print(
-          'playingIndex is $playingIndex playing song is ${playingSong.displayName}');
-      await startPlayer(songs[playingIndex], playingIndex);
+          'this.widget.playingIndex is $this.widget.playingIndex playing song is ${this.widget.playingSong.displayName}');
+      await startPlayer(this.widget.songs[this.widget.playingIndex],
+          this.widget.playingIndex);
     });
-    mediaPlayer
+    this.widget.mediaPlayer
       ..setErrorHandler((msg) {
         setState(() {
           print('msg is $msg');
-          playerState = PlayerState.stopped;
-          duration = new Duration(seconds: 0);
-          position = new Duration(seconds: 0);
+          this.widget.playerState = PlayerState.stopped;
+          this.widget.duration = new Duration(seconds: 0);
+          this.widget.position = new Duration(seconds: 0);
         });
       });
   }
@@ -598,34 +422,23 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   startPlayer(Song song, int i) async {
     print(song.data);
     print(song.displayName);
-    int rs = await mediaPlayer.playMusic(song.data);
+    int rs = await this.widget.mediaPlayer.playMusic(song.data);
     if (rs == 1) {
+      await sharedPreferences.setInt("lastSong", song.id);
       setState(() {
-        _animationController.forward();
-        playingSong = song;
-        playingIndex = i;
-        if (start) {
-          start = false;
+        this.widget.animationController.forward();
+        this.widget.playingSong = song;
+        this.widget.playingIndex = i;
+        if (this.widget.start) {
+          this.widget.start = false;
         }
-        playerState = PlayerState.playing;
-        print('here $playerState');
+        this.widget.playerState = PlayerState.playing;
+        print('here $this.widget.playerState');
       });
+      this.widget.callBackToUpdateSong(this.widget.playingSong,
+          this.widget.playingIndex, this.widget.start, this.widget.playerState);
     }
     setHandlers();
-  }
-
-  callBackToStart() {
-    setState(() {
-      start = false;
-    });
-  }
-
-  callBackToNext(int i) {
-    setState(() {
-      playingIndex = i;
-      playingSong = songs[i];
-    });
-    print('callBackCallerd');
   }
 
   myBottomSheet(BuildContext context, Song song) {

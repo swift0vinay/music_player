@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/previewLogo.dart';
 import 'package:music_player/songModel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'constants.dart';
 
@@ -53,9 +54,8 @@ class PlayMusic extends StatefulWidget {
 class _PlayMusicState extends State<PlayMusic>
     with SingleTickerProviderStateMixin {
   bool play = true;
-  // Duration duration;
-  // Duration position;
-  // PlayerState playerState;
+  bool faved = false;
+  SharedPreferences sharedPreferences;
   AnimationController animationController;
   @override
   void initState() {
@@ -67,6 +67,14 @@ class _PlayMusicState extends State<PlayMusic>
     if (this.widget.mediaPlayer != null) {
       resumePlayer();
     }
+    if (favs.contains(this.widget.song.id.toString())) {
+      faved = true;
+    }
+    initSp();
+  }
+
+  initSp() async {
+    sharedPreferences = await SharedPreferences.getInstance();
   }
 
   @override
@@ -317,11 +325,24 @@ class _PlayMusicState extends State<PlayMusic>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.favorite_border),
-                    onPressed: () {},
-                    color: white.withOpacity(0.5),
-                  ),
+                  !faved
+                      ? IconButton(
+                          icon: Icon(Icons.favorite_border),
+                          onPressed: () {
+                            addFav();
+                          },
+                          color: white.withOpacity(0.5),
+                        )
+                      : IconButton(
+                          icon: Icon(
+                            Icons.favorite,
+                            color: orange,
+                          ),
+                          onPressed: () {
+                            removeFav();
+                          },
+                          color: white.withOpacity(0.5),
+                        ),
                   this.widget.playMode == PlayMode.loop
                       ? IconButton(
                           icon: Icon(Icons.repeat),
@@ -383,6 +404,7 @@ class _PlayMusicState extends State<PlayMusic>
     print(song.data);
     print(song.displayName);
     int rs = await this.widget.mediaPlayer.playMusic(song.data);
+    await sharedPreferences.setInt("lastSong", song.id);
     if (this.widget.start) {
       setState(() {
         this.widget.start = false;
@@ -483,5 +505,21 @@ class _PlayMusicState extends State<PlayMusic>
           this.widget.position = new Duration(seconds: 0);
         });
       });
+  }
+
+  addFav() {
+    favs.add(this.widget.song.id.toString());
+    sharedPreferences.setStringList('fav', favs);
+    setState(() {
+      faved = true;
+    });
+  }
+
+  removeFav() {
+    favs.remove(this.widget.song.id.toString());
+    sharedPreferences.setStringList('fav', favs);
+    setState(() {
+      faved = false;
+    });
   }
 }

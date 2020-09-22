@@ -132,10 +132,6 @@ class MediaPlayer {
       case "onScanComplete":
         {
           print(call.arguments);
-
-          // scanStart.value = call.arguments;
-          print('00000000000000000000000000000000000${scanStart.value}');
-
           break;
         }
       case "audio.onDuration":
