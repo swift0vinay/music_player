@@ -7,6 +7,9 @@
          FlutterApplication and put your custom class here. -->
    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+   <uses-permission android:name="android.permission.VIBRATE" />
+   <uses-permission android:name="android.permission.WAKE_LOCK" />
      <application
         android:name="io.flutter.app.FlutterApplication"
         android:label="music_player"
@@ -45,5 +48,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+             <receiver android:name="NotificationReturnSlot"></receiver>
+        <receiver android:name="androidx.media.session.MediaButtonReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name=".NotificationPanel"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 </manifest>

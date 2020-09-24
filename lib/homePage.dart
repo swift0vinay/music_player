@@ -8,6 +8,7 @@ import 'package:music_player/detailsPage.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/loader.dart';
+import 'package:music_player/notification.dart';
 import 'package:music_player/playMusic.dart';
 import 'package:music_player/previewLogo.dart';
 import 'package:music_player/services/scanMusic.dart';
@@ -424,6 +425,15 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     print(song.displayName);
     int rs = await this.widget.mediaPlayer.playMusic(song.data);
     if (rs == 1) {
+      bool isPlaying =
+          this.widget.playerState == PlayerState.paused ? false : true;
+      await MyNotification.showNotification(song.artist, song.title, isPlaying)
+          .then((value) {
+        print('notification started');
+      }).catchError((e) {
+        print('notifiaciotn errroroo');
+        print(e.toString());
+      });
       await sharedPreferences.setInt("lastSong", song.id);
       setState(() {
         this.widget.animationController.forward();

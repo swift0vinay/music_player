@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/homePage.dart';
 import 'package:music_player/loader.dart';
+import 'package:music_player/notification.dart';
 import 'package:music_player/playMusic.dart';
 import 'package:music_player/playlist/playlistpage.dart';
 import 'package:music_player/previewLogo.dart';
@@ -127,6 +128,41 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     initSp();
     _listenForPermissionStatus();
     getPermission();
+    MyNotification.setListeners('play', () async {
+      await resume();
+    });
+    MyNotification.setListeners('pause', () async {
+      await pause();
+    });
+    MyNotification.setListeners('next', () async {
+      int newi;
+      if (playMode != PlayMode.shuffle) {
+        newi = nextSong(playingIndex);
+      } else {
+        newi = randomSong();
+      }
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+      await startPlayer(songs[newi], newi);
+    });
+    MyNotification.setListeners('prev', () async {
+      int newi;
+      if (playMode != PlayMode.shuffle) {
+        newi = prevSong(playingIndex);
+      } else {
+        newi = randomSong();
+      }
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+      });
+      await startPlayer(songs[newi], newi);
+    });
   }
 
   initSp() async {
@@ -299,8 +335,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
               SizedBox(
                 width: width * 0.1,
                 child: GestureDetector(
-                  onTap: () {
-                    playerState == PlayerState.playing ? pause() : resume();
+                  onTap: () async {
+                    if (playerState == PlayerState.playing) {
+                      await MyNotification.hideNotification();
+                      pause();
+                    } else {
+                      await MyNotification.showNotification(
+                          playingSong.artist, playingSong.title, true);
+                      resume();
+                    }
                   },
                   child: AnimatedIcon(
                     icon: AnimatedIcons.play_pause,
@@ -404,6 +447,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     print(song.displayName);
     int rs = await mediaPlayer.playMusic(song.data);
     if (rs == 1) {
+      bool isPlaying = playerState == PlayerState.paused ? false : true;
+      await MyNotification.showNotification(song.artist, song.title, isPlaying)
+          .then((value) {
+        print('notification started');
+      }).catchError((e) {
+        print('notifiaciotn errroroo');
+        print(e.toString());
+      });
+
       await sharedPreferences.setInt("lastSong", song.id);
       setState(() {
         _animationController.forward();

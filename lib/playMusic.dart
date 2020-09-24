@@ -6,7 +6,7 @@ import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/previewLogo.dart';
 import 'package:music_player/songModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:music_player/notification.dart';
 import 'constants.dart';
 
 class PlayMusic extends StatefulWidget {
@@ -64,6 +64,43 @@ class _PlayMusicState extends State<PlayMusic>
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     print(this.widget.mediaPlayer);
+    MyNotification.setListeners('play', () async {
+      await resume();
+    });
+    MyNotification.setListeners('pause', () async {
+      await pause();
+    });
+    MyNotification.setListeners('next', () async {
+      int newi;
+      if (this.widget.playMode != PlayMode.shuffle) {
+        newi = this.widget.nextSong(this.widget.index);
+      } else {
+        newi = this.widget.randomSong();
+      }
+      setState(() {
+        this.widget.song = this.widget.songs[newi];
+        this.widget.index = newi;
+        if (animationController.status == AnimationStatus.dismissed) {
+          animationController.forward();
+        }
+      });
+      await startPlayer(
+        this.widget.songs[newi],
+      );
+    });
+    MyNotification.setListeners('prev', () async {
+      int newi;
+      if (this.widget.playMode != PlayMode.shuffle) {
+        newi = this.widget.prevSong(this.widget.index);
+      } else {
+        newi = this.widget.randomSong();
+      }
+      setState(() {
+        this.widget.song = this.widget.songs[newi];
+        this.widget.index = newi;
+      });
+      await startPlayer(this.widget.songs[newi]);
+    });
     if (this.widget.mediaPlayer != null) {
       resumePlayer();
     }
@@ -254,15 +291,26 @@ class _PlayMusicState extends State<PlayMusic>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 InkWell(
-                  onTap: () {
-                    int newi = this.widget.prevSong(this.widget.index);
+                  onTap: () async {
+                    int newi;
+                    if (this.widget.playMode != PlayMode.shuffle) {
+                      newi = this.widget.prevSong(this.widget.index);
+                    } else {
+                      newi = this.widget.randomSong();
+                    }
                     setState(() {
                       this.widget.song = this.widget.songs[newi];
                       this.widget.index = newi;
                     });
-                    startPlayer(
-                      this.widget.songs[newi],
-                    );
+                    await startPlayer(this.widget.songs[newi]);
+                    // int newi = this.widget.prevSong(this.widget.index);
+                    // setState(() {
+                    //   this.widget.song = this.widget.songs[newi];
+                    //   this.widget.index = newi;
+                    // });
+                    // startPlayer(
+                    //   this.widget.songs[newi],
+                    // );
                   },
                   child: Icon(
                     Icons.arrow_back_ios,
@@ -270,10 +318,17 @@ class _PlayMusicState extends State<PlayMusic>
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    this.widget.playerState == PlayerState.playing
-                        ? pause()
-                        : resume();
+                  onTap: () async {
+                    if (this.widget.playerState == PlayerState.playing) {
+                      await MyNotification.hideNotification();
+                      pause();
+                    } else {
+                      await MyNotification.showNotification(
+                          this.widget.song.artist,
+                          this.widget.song.title,
+                          true);
+                      resume();
+                    }
                   },
                   child: CircleAvatar(
                     backgroundColor: orange,
@@ -404,6 +459,15 @@ class _PlayMusicState extends State<PlayMusic>
     print(song.data);
     print(song.displayName);
     int rs = await this.widget.mediaPlayer.playMusic(song.data);
+    bool isPlaying =
+        this.widget.playerState == PlayerState.paused ? false : true;
+    await MyNotification.showNotification(song.artist, song.title, isPlaying)
+        .then((value) {
+      print('notification started');
+    }).catchError((e) {
+      print('notifiaciotn errroroo');
+      print(e.toString());
+    });
     await sharedPreferences.setInt("lastSong", song.id);
     if (this.widget.start) {
       setState(() {

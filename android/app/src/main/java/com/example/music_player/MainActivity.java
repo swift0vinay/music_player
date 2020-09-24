@@ -26,27 +26,84 @@ import java.io.FileOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
 public class MainActivity extends FlutterActivity {
     private static String channelName = "com.example.mc/tester";
+    private static String channelName2 = "notification";
     private HashMap<Long, String> albumMap = new HashMap<>();
     private HashMap<String, HashMap<String, Object>> songs = new HashMap<>();
     MediaPlayer mediaPlayer;
     Handler handler = new Handler();
-    private MethodChannel channel;
+    static private MethodChannel channel;
+    static private MethodChannel notificationChannel;
+
+    static void showNotification(String title, String author, boolean play, Context context ) {
+
+        Intent serviceIntent = new Intent(context, NotificationPanel.class);
+        serviceIntent.putExtra("title", title);
+        serviceIntent.putExtra("author", author);
+        serviceIntent.putExtra("isPlaying", play);
+        context.startService(serviceIntent);
+    }
+
+    static private void hideNotification(Context context) {
+        Intent serviceIntent = new Intent(context, NotificationPanel.class);
+        context.stopService(serviceIntent);
+    }
+
+    static void callEvent(String event) {
+
+        MainActivity.notificationChannel.invokeMethod(event, null, new MethodChannel.Result() {
+            @Override
+            public void success(Object o) {
+                // this will be called with o = "some string"
+            }
+
+            @Override
+            public void error(String s, String s1, Object o) {
+            }
+
+            @Override
+            public void notImplemented() {
+            }
+        });
+    }
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
         GeneratedPluginRegistrant.registerWith(flutterEngine);
         channel = new MethodChannel(flutterEngine.getDartExecutor(), channelName);
+        notificationChannel = new MethodChannel(flutterEngine.getDartExecutor(), channelName2);
+        Context context=getApplicationContext();
+        notificationChannel.setMethodCallHandler(
+                new MethodChannel.MethodCallHandler() {
+                    @Override
+                    public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+                        if (call.method.equals("showNotification")) {
+                            String title = call.argument("title");
+                            String artist = call.argument("artist");
+                            boolean isPlaying = call.argument("isPlaying");
+                            showNotification(title, artist, isPlaying,context);
+                            result.success(null);
+                        } else if (call.method.equals("hideNotification")) {
+                            hideNotification(context);
+                            result.success(null);
+                        } else {
+                            result.notImplemented();
+                        }
+                    }
+                }
+        );
         channel.setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
