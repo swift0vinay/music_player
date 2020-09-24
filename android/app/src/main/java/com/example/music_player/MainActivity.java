@@ -41,7 +41,7 @@ public class MainActivity extends FlutterActivity {
     private static String channelName2 = "notification";
     private HashMap<Long, String> albumMap = new HashMap<>();
     private HashMap<String, HashMap<String, Object>> songs = new HashMap<>();
-    MediaPlayer mediaPlayer;
+    static MediaPlayer mediaPlayer;
     Handler handler = new Handler();
     static private MethodChannel channel;
     static private MethodChannel notificationChannel;

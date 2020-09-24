@@ -127,5 +127,10 @@ public class NotificationPanel extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         stopForeground(true);
+        if (MainActivity.mediaPlayer != null) {
+            MainActivity.mediaPlayer.stop();
+            MainActivity.mediaPlayer.release();
+            MainActivity.mediaPlayer = null;
+        }
     }
 }
