@@ -18,9 +18,9 @@ class PlayMusic extends StatefulWidget {
   Duration duration;
   Duration position;
   int index;
+  Function callBackToUpdateSong;
   Function callBackToState;
   Function callBackToPosition;
-  Function callBackToNext;
   Function callBackToStart;
   Function callBackToMode;
   Function randomSong;
@@ -30,8 +30,8 @@ class PlayMusic extends StatefulWidget {
   List<Song> songs;
   PlayMusic(
       {this.duration,
-      this.callBackToNext,
       this.prevSong,
+      this.callBackToUpdateSong,
       this.index,
       this.songs,
       this.start,
@@ -54,6 +54,7 @@ class PlayMusic extends StatefulWidget {
 class _PlayMusicState extends State<PlayMusic>
     with SingleTickerProviderStateMixin {
   bool play = true;
+  bool onScreen;
   bool faved = false;
   SharedPreferences sharedPreferences;
   AnimationController animationController;
@@ -61,45 +62,24 @@ class _PlayMusicState extends State<PlayMusic>
   void initState() {
     // TODO: implement initState
     super.initState();
+    onScreen = true;
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     print(this.widget.mediaPlayer);
-    MyNotification.setListeners('play', () async {
-      await resume();
+    MyNotification.setListeners('play', () {
+      resume();
     });
     MyNotification.setListeners('pause', () async {
-      await pause();
+      // await MyNotification.hideNotification();
+      pause(true);
     });
-    MyNotification.setListeners('next', () async {
-      int newi;
-      if (this.widget.playMode != PlayMode.shuffle) {
-        newi = this.widget.nextSong(this.widget.index);
-      } else {
-        newi = this.widget.randomSong();
-      }
-      setState(() {
-        this.widget.song = this.widget.songs[newi];
-        this.widget.index = newi;
-        if (animationController.status == AnimationStatus.dismissed) {
-          animationController.forward();
-        }
-      });
-      await startPlayer(
-        this.widget.songs[newi],
-      );
+    MyNotification.setListeners('next', () {
+      int newi = this.widget.nextSong(this.widget.index);
+      startPlayer(this.widget.songs[newi], newi);
     });
-    MyNotification.setListeners('prev', () async {
-      int newi;
-      if (this.widget.playMode != PlayMode.shuffle) {
-        newi = this.widget.prevSong(this.widget.index);
-      } else {
-        newi = this.widget.randomSong();
-      }
-      setState(() {
-        this.widget.song = this.widget.songs[newi];
-        this.widget.index = newi;
-      });
-      await startPlayer(this.widget.songs[newi]);
+    MyNotification.setListeners('prev', () {
+      int newi = this.widget.prevSong(this.widget.index);
+      startPlayer(this.widget.songs[newi], newi);
     });
     if (this.widget.mediaPlayer != null) {
       resumePlayer();
@@ -117,6 +97,7 @@ class _PlayMusicState extends State<PlayMusic>
   @override
   void dispose() {
     super.dispose();
+    onScreen = false;
     animationController.dispose();
   }
 
@@ -290,38 +271,22 @@ class _PlayMusicState extends State<PlayMusic>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                InkWell(
-                  onTap: () async {
-                    int newi;
-                    if (this.widget.playMode != PlayMode.shuffle) {
-                      newi = this.widget.prevSong(this.widget.index);
-                    } else {
-                      newi = this.widget.randomSong();
-                    }
-                    setState(() {
-                      this.widget.song = this.widget.songs[newi];
-                      this.widget.index = newi;
-                    });
-                    await startPlayer(this.widget.songs[newi]);
-                    // int newi = this.widget.prevSong(this.widget.index);
-                    // setState(() {
-                    //   this.widget.song = this.widget.songs[newi];
-                    //   this.widget.index = newi;
-                    // });
-                    // startPlayer(
-                    //   this.widget.songs[newi],
-                    // );
+                IconButton(
+                  onPressed: () {
+                    int newi = this.widget.prevSong(this.widget.index);
+                    startPlayer(this.widget.songs[newi], newi);
                   },
-                  child: Icon(
-                    Icons.arrow_back_ios,
+                  icon: Icon(
+                    Icons.skip_previous,
                     color: orange,
+                    size: 30,
                   ),
                 ),
                 GestureDetector(
                   onTap: () async {
                     if (this.widget.playerState == PlayerState.playing) {
                       await MyNotification.hideNotification();
-                      pause();
+                      pause(false);
                     } else {
                       await MyNotification.showNotification(
                           this.widget.song.artist,
@@ -339,35 +304,16 @@ class _PlayMusicState extends State<PlayMusic>
                       color: white,
                       size: 35,
                     ),
-                    // Icon(
-                    //   Icons.play_arrow,
-                    //   color: white,
-                    //   size: 40,
-                    // ),
                   ),
                 ),
-                InkWell(
-                  onTap: () async {
-                    int newi;
-                    if (this.widget.playMode != PlayMode.shuffle) {
-                      newi = this.widget.nextSong(this.widget.index);
-                    } else {
-                      newi = this.widget.randomSong();
-                    }
-                    setState(() {
-                      this.widget.song = this.widget.songs[newi];
-                      this.widget.index = newi;
-                      if (animationController.status ==
-                          AnimationStatus.dismissed) {
-                        animationController.forward();
-                      }
-                    });
-                    await startPlayer(
-                      this.widget.songs[newi],
-                    );
+                IconButton(
+                  onPressed: () async {
+                    int newi = this.widget.nextSong(this.widget.index);
+                    startPlayer(this.widget.songs[newi], newi);
                   },
-                  child: Icon(
-                    Icons.arrow_forward_ios,
+                  icon: Icon(
+                    Icons.skip_next,
+                    size: 30,
                     color: orange,
                   ),
                 ),
@@ -455,76 +401,89 @@ class _PlayMusicState extends State<PlayMusic>
     );
   }
 
-  startPlayer(Song song) async {
+  startPlayer(Song song, int playingIndex) async {
     print(song.data);
     print(song.displayName);
     int rs = await this.widget.mediaPlayer.playMusic(song.data);
-    bool isPlaying =
-        this.widget.playerState == PlayerState.paused ? false : true;
-    await MyNotification.showNotification(song.artist, song.title, isPlaying)
-        .then((value) {
-      print('notification started');
-    }).catchError((e) {
-      print('notifiaciotn errroroo');
-      print(e.toString());
-    });
-    await sharedPreferences.setInt("lastSong", song.id);
-    if (this.widget.start) {
-      setState(() {
+    if (rs == 1) {
+      // setState(() {
+      this.widget.song = song;
+      this.widget.index = playingIndex;
+      if (this.widget.start) {
         this.widget.start = false;
+      }
+      this.widget.playerState = PlayerState.playing;
+      print('here $this.widget.playerState');
+      // });
+      bool isPlaying =
+          this.widget.playerState == PlayerState.paused ? false : true;
+      await MyNotification.showNotification(song.artist, song.title, isPlaying)
+          .then((value) {
+        print('notification started');
+      }).catchError((e) {
+        print('notifiaciotn errroroo');
+        print(e.toString());
       });
-      this.widget.callBackToStart();
+      await sharedPreferences.setInt("lastSong", song.id);
+
+      try {
+        animationController.forward();
+        // setState(() {});
+      } on TickerCanceled {}
+      this.widget.callBackToUpdateSong(this.widget.song, this.widget.index,
+          this.widget.start, this.widget.playerState);
+      setHandlers();
     }
-    setHandlers();
   }
 
-  pause() async {
+  pause(bool fromNotification) async {
+    print('I am Caleeeeeddddddddddd');
     int rs = await this.widget.mediaPlayer.pauseSong();
     if (rs == 1) {
-      setState(() {
-        animationController.reverse();
-        this.widget.playerState = PlayerState.paused;
-      });
+      this.widget.playerState = PlayerState.paused;
       this.widget.callBackToState(
           this.widget.playerState, this.widget.duration, this.widget.position);
+      try {
+        if (onScreen || !fromNotification) {
+          animationController.reverse();
+        }
+        // setState(() {});
+      } on TickerCanceled {
+        print('asfas');
+      }
     }
   }
 
   resume() async {
     if (this.widget.start) {
-      startPlayer(this.widget.song);
-      setState(() {
+      startPlayer(this.widget.song, this.widget.index);
+    } else {
+      int rs = await this.widget.mediaPlayer.resumeSong();
+      if (rs == 1) {
+        this.widget.playerState = PlayerState.playing;
         if (this.widget.start) {
           this.widget.start = false;
           this.widget.callBackToStart();
         }
-        animationController.forward();
-        this.widget.playerState = PlayerState.playing;
-        this.widget.callBackToState(this.widget.playerState,
-            this.widget.duration, this.widget.position);
-      });
-    } else {
-      int rs = await this.widget.mediaPlayer.resumeSong();
-      if (rs == 1) {
-        setState(() {
-          animationController.forward();
-          this.widget.playerState = PlayerState.playing;
-          if (this.widget.start) {
-            this.widget.start = false;
-            this.widget.callBackToStart();
+        try {
+          if (animationController.status == AnimationStatus.dismissed) {
+            animationController.forward();
           }
-        });
+          setState(() {});
+        } on TickerCanceled {}
         this.widget.callBackToState(this.widget.playerState,
             this.widget.duration, this.widget.position);
+        setHandlers();
       }
     }
   }
 
   void resumePlayer() {
     if (this.widget.playerState == PlayerState.playing) {
-      setState(() {
+      try {
         animationController.forward();
-      });
+        setState(() {});
+      } on TickerCanceled {}
     }
     setHandlers();
   }
@@ -543,22 +502,10 @@ class _PlayMusicState extends State<PlayMusic>
       this.widget.callBackToPosition(p);
     });
     this.widget.mediaPlayer.setCompletionHandler(() async {
-      int newi;
-      if (this.widget.playMode == PlayMode.loop) {
-        newi = this.widget.nextSong(this.widget.index);
-      } else if (this.widget.playMode == PlayMode.repeat) {
-        newi = this.widget.index;
-      } else {
-        Random random = new Random();
-        newi = random.nextInt(this.widget.songs.length);
-      }
-      print('new index is $newi');
-      this.widget.song = this.widget.songs[newi];
-      this.widget.index = newi;
+      int newi = this.widget.nextSong(this.widget.index);
       print('-------------------------------');
-      await startPlayer(this.widget.songs[newi]);
+      startPlayer(this.widget.songs[newi], newi);
       print('+++++++++++++++++++++++++++++');
-      this.widget.callBackToNext(newi);
     });
     this.widget.mediaPlayer
       ..setErrorHandler((msg) {

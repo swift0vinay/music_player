@@ -128,19 +128,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     initSp();
     _listenForPermissionStatus();
     getPermission();
-    MyNotification.setListeners('play', () async {
-      await resume();
+    MyNotification.setListeners('play', () {
+      resume();
     });
     MyNotification.setListeners('pause', () async {
-      await pause();
+      // await MyNotification.hideNotification();
+      pause();
     });
-    MyNotification.setListeners('next', () async {
-      int newi;
-      if (playMode != PlayMode.shuffle) {
-        newi = nextSong(playingIndex);
-      } else {
-        newi = randomSong();
-      }
+    MyNotification.setListeners('next', () {
+      int newi = nextSong(playingIndex);
       setState(() {
         playingSong = songs[newi];
         playingIndex = newi;
@@ -148,20 +144,18 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
           _animationController.forward();
         }
       });
-      await startPlayer(songs[newi], newi);
+      startPlayer(songs[newi], newi);
     });
-    MyNotification.setListeners('prev', () async {
-      int newi;
-      if (playMode != PlayMode.shuffle) {
-        newi = prevSong(playingIndex);
-      } else {
-        newi = randomSong();
-      }
+    MyNotification.setListeners('prev', () {
+      int newi = prevSong(playingIndex);
       setState(() {
         playingSong = songs[newi];
         playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
       });
-      await startPlayer(songs[newi], newi);
+      startPlayer(songs[newi], newi);
     });
   }
 
@@ -238,25 +232,25 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
           controller: tabController,
           children: [
             MyHome(
-              callBackToUpdateSong: callBackToUpdateSong,
-              animationController: _animationController,
+              nextSong: nextSong,
+              prevSong: prevSong,
+              showPlayer: showPlayer,
               duration: duration,
-              mediaPlayer: mediaPlayer,
-              play: play,
-              playMode: playMode,
-              playerState: playerState,
-              playingSong: playingSong,
-              playingIndex: playingIndex,
               position: position,
-              songs: songs,
+              mediaPlayer: mediaPlayer,
               start: start,
-              anothercallBackToDuration: anothercallBackToDuration,
-              anothercallBackToMode: anothercallBackToMode,
-              anothercallBackToPosition: anothercallBackToPosition,
-              anothercallBackToNext: anothercallBackToNext,
-              anothercallBackToStart: anothercallBackToStart,
-              anothercallBackToState: anothercallBackToState,
-              anothercallBackToStop: anothercallBackToStop,
+              songs: songs,
+              playMode: playMode,
+              playingIndex: playingIndex,
+              playingSong: playingSong,
+              playerState: playerState,
+              callBackToMode: callBackToMode,
+              callBackToState: callBackToState,
+              callBackToStart: callBackToStart,
+              callBackToPosition: callBackToPosition,
+              callBackToUpdateSong: callBackToUpdateSong,
+              callBackToDuration: callBackToDuration,
+              callBackToStop: callBackToStop,
               listfetched: listfetched,
             ),
             Playlist(
@@ -378,9 +372,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   resume() async {
     if (start) {
       startPlayer(songs[playingIndex], playingIndex);
-      setState(() {
-        start = false;
-      });
     } else {
       int rs = await mediaPlayer.resumeSong();
       if (rs == 1) {
@@ -418,26 +409,25 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         isScrollControlled: true,
         builder: (context) {
           return PlayMusic(
-            randomSong: randomSong,
-            callBackToNext: callBackToNext,
-            callBackToMode: callBackToMode,
-            playMode: playMode,
-            callBackToStart: callBackToStart,
-            callBackToDuration: callBackToDuration,
-            callBackToPosition: callBackToPosition,
-            start: start,
-            songs: songs,
-            index: playingIndex,
-            mediaPlayer: mediaPlayer,
-            song: playingSong,
-            playerState: playerState,
+            nextSong: nextSong,
+            prevSong: prevSong,
             duration: duration == null
                 ? Duration(milliseconds: playingSong.duration)
                 : duration,
             position: position == null ? Duration(milliseconds: 0) : position,
+            mediaPlayer: mediaPlayer,
+            start: start,
+            songs: songs,
+            playMode: playMode,
+            index: playingIndex,
+            song: playingSong,
+            playerState: playerState,
+            callBackToMode: callBackToMode,
             callBackToState: callBackToState,
-            nextSong: nextSong,
-            prevSong: prevSong,
+            callBackToStart: callBackToStart,
+            callBackToDuration: callBackToDuration,
+            callBackToPosition: callBackToPosition,
+            callBackToUpdateSong: callBackToUpdateSong,
           );
         });
   }
@@ -455,7 +445,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         print('notifiaciotn errroroo');
         print(e.toString());
       });
-
       await sharedPreferences.setInt("lastSong", song.id);
       setState(() {
         _animationController.forward();
@@ -484,20 +473,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       });
     });
     mediaPlayer.setCompletionHandler(() async {
-      setState(() {
-        int newi;
-        if (playMode == PlayMode.loop) {
-          newi = nextSong(playingIndex);
-        } else if (playMode == PlayMode.repeat) {
-          newi = playingIndex;
-        } else {
-          Random random = new Random();
-          newi = random.nextInt(songs.length);
-        }
-        print('new jsfkafk is $newi');
-        playingSong = songs[newi];
-        playingIndex = newi;
-      });
+      int newi = nextSong(playingIndex);
       print(
           'playingIndex is $playingIndex playing song is ${playingSong.displayName}');
       await startPlayer(songs[playingIndex], playingIndex);
@@ -527,7 +503,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   }
 
   int nextSong(int i) {
-    int newi = (i + 1) % songs.length;
+    int newi;
+    if (playMode == PlayMode.loop) {
+      newi = (i + 1) % songs.length;
+    } else if (playMode == PlayMode.repeat) {
+      newi = playingIndex;
+    } else {
+      Random random = new Random();
+      newi = random.nextInt(songs.length);
+    }
     setState(() {
       if (start) {
         start = false;
@@ -535,12 +519,19 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       playingIndex = newi;
       playingSong = songs[newi];
     });
-    // await startPlayer(songs[newi], newi);
     return newi;
   }
 
   int prevSong(int i) {
-    int newi = (i - 1) % songs.length;
+    int newi;
+    if (playMode == PlayMode.loop) {
+      newi = (i - 1) % songs.length;
+    } else if (playMode == PlayMode.repeat) {
+      newi = playingIndex;
+    } else {
+      Random random = new Random();
+      newi = random.nextInt(songs.length);
+    }
     setState(() {
       if (start) {
         start = false;
@@ -548,7 +539,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       playingIndex = newi;
       playingSong = songs[newi];
     });
-    // await startPlayer(songs[newi], newi);
     return newi;
   }
 
@@ -560,26 +550,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       playingIndex = piu;
       start = s;
       playerState = pss;
-    });
-  }
-
-  callBackToState(PlayerState pp, Duration d, Duration p) {
-    setState(() {
-      playerState = pp;
-      if (start) {
-        start = false;
-      }
       if (playerState == PlayerState.playing) {
         _animationController.forward();
       } else {
         _animationController.reverse();
       }
-      duration = d;
-      position = p;
     });
   }
 
-  anothercallBackToState(PlayerState pp, Duration d, Duration p) {
+  callBackToState(PlayerState pp, Duration d, Duration p) {
     setState(() {
       playerState = pp;
       if (start) {
@@ -601,35 +580,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     });
   }
 
-  anothercallBackToStart() {
-    setState(() {
-      start = false;
-    });
-  }
-
-  callBackToNext(int i) {
-    setState(() {
-      playingIndex = i;
-      playingSong = songs[i];
-    });
-    print('callBackCallerd');
-  }
-
-  anothercallBackToNext(int i) {
-    setState(() {
-      playingIndex = i;
-      playingSong = songs[i];
-    });
-    print('callBackCallerd');
-  }
-
   callBackToStop() {
-    setState(() {
-      playerState = PlayerState.stopped;
-    });
-  }
-
-  anothercallBackToStop() {
     setState(() {
       playerState = PlayerState.stopped;
     });
@@ -641,32 +592,13 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     });
   }
 
-  anothercallBackToDuration(Duration d) {
-    setState(() {
-      duration = d;
-    });
-  }
-
   callBackToPosition(Duration p) {
     setState(() {
       position = p;
     });
   }
 
-  anothercallBackToPosition(Duration p) {
-    setState(() {
-      position = p;
-    });
-  }
-
   callBackToMode(PlayMode pm) {
-    setState(() {
-      playMode = pm;
-    });
-    print(playMode);
-  }
-
-  anothercallBackToMode(PlayMode pm) {
     setState(() {
       playMode = pm;
     });
