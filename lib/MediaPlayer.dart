@@ -55,7 +55,8 @@ class MediaPlayer {
           .invokeMethod('playMusic', <String, dynamic>{'path': path});
       return rs;
     } on PlatformException catch (e) {
-      print(e);
+      print(
+          ')))))))))))))))))))))))))))))))))))) errorroororo ${e.toString()}');
       return -1;
     }
   }

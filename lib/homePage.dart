@@ -60,10 +60,21 @@ class MyHome extends StatefulWidget {
     this.position,
   });
   @override
-  _MyHomeState createState() => _MyHomeState();
+  _MyHomeState createState() => _MyHomeState(
+        playMode: playMode,
+        playerState: playerState,
+        playingIndex: playingIndex,
+        playingSong: playingSong,
+      );
 }
 
 class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
+  PlayMode playMode;
+  PlayerState playerState;
+  Song playingSong;
+  int playingIndex;
+  _MyHomeState(
+      {this.playMode, this.playerState, this.playingIndex, this.playingSong});
   final key = GlobalKey<ScaffoldState>();
   SharedPreferences sharedPreferences;
   @override
@@ -81,7 +92,6 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-
     return SafeArea(
       child: Scaffold(
         backgroundColor: black,
@@ -98,12 +108,10 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         String name = this.widget.songs[i].title;
                         String artist = this.widget.songs[i].artist;
                         bool played = false;
-                        if (this.widget.playingSong != null) {
-                          played = this.widget.songs[i].id ==
-                                  this.widget.playingSong.id
-                              ? true
-                              : false;
-                        }
+                        played = this.widget.songs[i].id ==
+                                this.widget.playingSong.id
+                            ? true
+                            : false;
                         if (name.length > 27) {
                           String s = '${name.substring(0, 28)}...';
                           name = s;
@@ -187,7 +195,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Row(
               children: [
                 played
-                    ? (this.widget.playerState == PlayerState.playing
+                    ? (playerState == PlayerState.playing
                         ? Loader1()
                         : Container())
                     : Container(),
@@ -215,11 +223,11 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (this.widget.start) {
           this.widget.start = false;
         }
-        this.widget.playerState = PlayerState.paused;
+        playerState = PlayerState.paused;
         print('pause ${this.widget.position}');
       });
       this.widget.callBackToState(
-            this.widget.playerState,
+            playerState,
             this.widget.duration,
             this.widget.position,
           );
@@ -228,17 +236,22 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   resume() async {
     if (this.widget.start) {
-      startPlayer(this.widget.playingSong, this.widget.playingIndex);
+      startPlayer(playingSong, playingIndex);
     } else {
       int rs = await this.widget.mediaPlayer.resumeSong();
       if (rs == 1) {
         setState(() {
-          this.widget.playerState = PlayerState.playing;
+          playerState = PlayerState.playing;
           if (this.widget.start) {
             this.widget.start = false;
           }
-          print('resume $this.widget.position');
+          print('resume ${this.widget.duration}');
         });
+        this.widget.callBackToState(
+            playerState, this.widget.duration, this.widget.position);
+        print('resume ${this.widget.duration}');
+
+        // print('resume $this.widget.position');
         setHandlers();
       }
     }
@@ -253,33 +266,25 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     this.widget.mediaPlayer.setPositionHandler((p) {
       setState(() {
         this.widget.position = p;
-        print('this.widget.position1 is $p');
+        // print('this.widget.position1 is $p');
       });
     });
     this.widget.mediaPlayer.setCompletionHandler(() async {
       setState(() {
-        int newi;
-        if (this.widget.playMode == PlayMode.loop) {
-          newi = this.widget.nextSong(this.widget.playingIndex);
-        } else if (this.widget.playMode == PlayMode.repeat) {
-          newi = this.widget.playingIndex;
-        } else {
-          Random random = new Random();
-          newi = random.nextInt(this.widget.songs.length);
-        }
-        this.widget.playingSong = this.widget.songs[newi];
-        this.widget.playingIndex = newi;
+        int newi = this.widget.nextSong(playingIndex);
+        playingSong = this.widget.songs[newi];
+        playingIndex = newi;
       });
       startPlayer(
-        this.widget.songs[this.widget.playingIndex],
-        this.widget.playingIndex,
+        this.widget.songs[playingIndex],
+        playingIndex,
       );
     });
     this.widget.mediaPlayer
       ..setErrorHandler((msg) {
         setState(() {
           print('msg is $msg');
-          this.widget.playerState = PlayerState.stopped;
+          playerState = PlayerState.stopped;
           this.widget.duration = new Duration(seconds: 0);
           this.widget.position = new Duration(seconds: 0);
         });
@@ -289,19 +294,22 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   startPlayer(Song song, int i) async {
     print(song.data);
     print(song.displayName);
-    int rs = await this.widget.mediaPlayer.playMusic(song.data);
+    int rs = await this.widget.mediaPlayer.playMusic(song.data).catchError((e) {
+      print(
+          ')))))))))))))))))))))))))))))))))))) errorroororo ${e.toString()}');
+    });
     if (rs == 1) {
+      print('played success******************************************');
       setState(() {
-        this.widget.playingSong = song;
-        this.widget.playingIndex = i;
+        playingSong = song;
+        playingIndex = i;
         if (this.widget.start) {
           this.widget.start = false;
         }
-        this.widget.playerState = PlayerState.playing;
-        print('here $this.widget.playerState');
+        playerState = PlayerState.playing;
+        // print('here $playerState');
       });
-      bool isPlaying =
-          this.widget.playerState == PlayerState.paused ? false : true;
+      bool isPlaying = playerState == PlayerState.paused ? false : true;
       await MyNotification.showNotification(song.artist, song.title, isPlaying)
           .then((value) {
         print('notification started');
@@ -310,10 +318,12 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         print(e.toString());
       });
       await sharedPreferences.setInt("lastSong", song.id);
-
-      this.widget.callBackToUpdateSong(this.widget.playingSong,
-          this.widget.playingIndex, this.widget.start, this.widget.playerState);
+      this.widget.callBackToUpdateSong(
+          playingSong, playingIndex, this.widget.start, playerState);
       setHandlers();
+    } else {
+      print(
+          '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
     }
   }
 

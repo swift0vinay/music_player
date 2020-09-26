@@ -364,7 +364,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         }
         _animationController.reverse();
         playerState = PlayerState.paused;
-        print('pause $position');
+        // print('pause $position');
       });
     }
   }
@@ -469,7 +469,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     mediaPlayer.setPositionHandler((p) {
       setState(() {
         position = p;
-        print('position1 is $p');
+        // print('position1 is $p');
       });
     });
     mediaPlayer.setCompletionHandler(() async {
@@ -546,14 +546,20 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
 
   callBackToUpdateSong(Song ps, int piu, bool s, PlayerState pss) {
     setState(() {
+      print(
+          'updating song !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
       playingSong = ps;
       playingIndex = piu;
       start = s;
       playerState = pss;
-      if (playerState == PlayerState.playing) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
+      try {
+        if (playerState == PlayerState.playing) {
+          _animationController.forward();
+        } else {
+          _animationController.reverse();
+        }
+      } on TickerCanceled {
+        print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ erererrere');
       }
     });
   }
