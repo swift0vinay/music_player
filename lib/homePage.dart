@@ -18,70 +18,45 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHome extends StatefulWidget {
   List<Song> songs;
-  Duration duration;
-  Duration position;
   Song playingSong;
   Function showPlayer;
-  bool start;
   int playingIndex;
-  MediaPlayer mediaPlayer;
+  Function startMusic;
+  bool listFetched;
   PlayerState playerState;
-  bool listfetched;
-  PlayMode playMode;
-  Function nextSong;
-  Function prevSong;
-  Function callBackToUpdateSong;
-  Function callBackToState;
-  Function callBackToStart;
-  Function callBackToStop;
-  Function callBackToDuration;
-  Function callBackToPosition;
-  Function callBackToMode;
   MyHome({
-    this.start,
-    this.listfetched,
-    this.nextSong,
-    this.prevSong,
-    this.showPlayer,
-    this.callBackToDuration,
-    this.callBackToMode,
-    this.callBackToUpdateSong,
-    this.callBackToPosition,
-    this.callBackToStart,
-    this.callBackToState,
-    this.callBackToStop,
-    this.songs,
-    this.duration,
-    this.mediaPlayer,
-    this.playMode,
     this.playerState,
+    this.startMusic,
+    this.listFetched,
+    this.songs,
+    this.showPlayer,
     this.playingIndex,
     this.playingSong,
-    this.position,
   });
   @override
   _MyHomeState createState() => _MyHomeState(
-        playMode: playMode,
-        playerState: playerState,
         playingIndex: playingIndex,
         playingSong: playingSong,
+        playerState: playerState,
       );
 }
 
 class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
-  PlayMode playMode;
-  PlayerState playerState;
   Song playingSong;
   int playingIndex;
-  _MyHomeState(
-      {this.playMode, this.playerState, this.playingIndex, this.playingSong});
+  PlayerState playerState;
+  _MyHomeState({
+    this.playerState,
+    this.playingIndex,
+    this.playingSong,
+  });
   final key = GlobalKey<ScaffoldState>();
   SharedPreferences sharedPreferences;
   @override
   void initState() {
     super.initState();
+
     initSp();
-    // scrollController = new ScrollController();
   }
 
   initSp() async {
@@ -90,13 +65,17 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    playingIndex = this.widget.playingIndex;
+    playingSong = this.widget.playingSong;
+    playerState = this.widget.playerState;
+    print('$playerState $playingIndex ${playingSong.displayName}');
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return SafeArea(
       child: Scaffold(
         backgroundColor: black,
         key: key,
-        body: this.widget.listfetched
+        body: this.widget.listFetched
             ? Column(
                 children: [
                   Expanded(
@@ -107,11 +86,8 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       itemBuilder: (context, i) {
                         String name = this.widget.songs[i].title;
                         String artist = this.widget.songs[i].artist;
-                        bool played = false;
-                        played = this.widget.songs[i].id ==
-                                this.widget.playingSong.id
-                            ? true
-                            : false;
+                        bool played = playingIndex == i ? true : false;
+                        print(played);
                         if (name.length > 27) {
                           String s = '${name.substring(0, 28)}...';
                           name = s;
@@ -144,7 +120,12 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               this.widget.showPlayer();
             }
           : () {
-              startPlayer(this.widget.songs[i], i);
+              setState(() {
+                playingSong = this.widget.songs[i];
+                playingIndex = i;
+                playerState = PlayerState.playing;
+              });
+              this.widget.startMusic(playingSong, playingIndex);
             },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
@@ -214,117 +195,6 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  pause() async {
-    int rs = await this.widget.mediaPlayer.pauseSong();
-    if (rs == 1) {
-      setState(() {
-        if (this.widget.start) {
-          this.widget.start = false;
-        }
-        playerState = PlayerState.paused;
-        print('pause ${this.widget.position}');
-      });
-      this.widget.callBackToState(
-            playerState,
-            this.widget.duration,
-            this.widget.position,
-          );
-    }
-  }
-
-  resume() async {
-    if (this.widget.start) {
-      startPlayer(playingSong, playingIndex);
-    } else {
-      int rs = await this.widget.mediaPlayer.resumeSong();
-      if (rs == 1) {
-        setState(() {
-          playerState = PlayerState.playing;
-          if (this.widget.start) {
-            this.widget.start = false;
-          }
-          print('resume ${this.widget.duration}');
-        });
-        this.widget.callBackToState(
-            playerState, this.widget.duration, this.widget.position);
-        print('resume ${this.widget.duration}');
-
-        // print('resume $this.widget.position');
-        setHandlers();
-      }
-    }
-  }
-
-  setHandlers() {
-    this.widget.mediaPlayer.setDurationHandler((d) {
-      setState(() {
-        this.widget.duration = d;
-      });
-    });
-    this.widget.mediaPlayer.setPositionHandler((p) {
-      setState(() {
-        this.widget.position = p;
-        // print('this.widget.position1 is $p');
-      });
-    });
-    this.widget.mediaPlayer.setCompletionHandler(() async {
-      setState(() {
-        int newi = this.widget.nextSong(playingIndex);
-        playingSong = this.widget.songs[newi];
-        playingIndex = newi;
-      });
-      startPlayer(
-        this.widget.songs[playingIndex],
-        playingIndex,
-      );
-    });
-    this.widget.mediaPlayer
-      ..setErrorHandler((msg) {
-        setState(() {
-          print('msg is $msg');
-          playerState = PlayerState.stopped;
-          this.widget.duration = new Duration(seconds: 0);
-          this.widget.position = new Duration(seconds: 0);
-        });
-      });
-  }
-
-  startPlayer(Song song, int i) async {
-    print(song.data);
-    print(song.displayName);
-    int rs = await this.widget.mediaPlayer.playMusic(song.data).catchError((e) {
-      print(
-          ')))))))))))))))))))))))))))))))))))) errorroororo ${e.toString()}');
-    });
-    if (rs == 1) {
-      print('played success******************************************');
-      setState(() {
-        playingSong = song;
-        playingIndex = i;
-        if (this.widget.start) {
-          this.widget.start = false;
-        }
-        playerState = PlayerState.playing;
-        // print('here $playerState');
-      });
-      bool isPlaying = playerState == PlayerState.paused ? false : true;
-      await MyNotification.showNotification(song.artist, song.title, isPlaying)
-          .then((value) {
-        print('notification started');
-      }).catchError((e) {
-        print('notifiaciotn errroroo');
-        print(e.toString());
-      });
-      await sharedPreferences.setInt("lastSong", song.id);
-      this.widget.callBackToUpdateSong(
-          playingSong, playingIndex, this.widget.start, playerState);
-      setHandlers();
-    } else {
-      print(
-          '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-    }
   }
 
   myBottomSheet(BuildContext context, Song song) {
