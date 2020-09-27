@@ -13,36 +13,7 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  // This widget is the root of your application.
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  SharedPreferences sharedPreferences;
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    initSp();
-  }
-
-  initSp() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-    getFavList();
-  }
-
-  getFavList() async {
-    List<String> temp = sharedPreferences.getStringList('fav');
-    if (temp == null) {
-      temp = [];
-    }
-    setState(() {
-      favs = temp;
-    });
-  }
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(

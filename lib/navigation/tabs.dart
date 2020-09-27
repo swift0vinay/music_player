@@ -35,7 +35,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   MediaPlayer mediaPlayer;
   PlayerState playerState;
   PlayMode playMode;
-  bool listfetched = false;
+  bool listfetched;
   SharedPreferences sharedPreferences;
   List<Widget> _tabs = [
     Tab(
@@ -68,6 +68,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         content: Text("Permission Required Restart the App"),
       ));
     } else {
+      await initSp();
       playerState = PlayerState.stopped;
       playMode = PlayMode.loop;
       mediaPlayer = new MediaPlayer();
@@ -75,6 +76,16 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
           vsync: this, duration: Duration(milliseconds: 300));
       await getAllMusic();
     }
+  }
+
+  getFavList() async {
+    List<String> temp = sharedPreferences.getStringList('fav');
+    if (temp == null) {
+      temp = [];
+    }
+    setState(() {
+      favs = temp;
+    });
   }
 
   getAllMusic() async {
@@ -103,8 +114,16 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         }
       }
     });
+    await getFavList();
     setState(() {
-      listfetched = true;
+      int ans = sharedPreferences.getInt('playMode');
+      if (ans == 0) {
+        playMode = PlayMode.loop;
+      } else if (ans == 1) {
+        playMode = PlayMode.repeat;
+      } else {
+        playMode = PlayMode.shuffle;
+      }
       var id = sharedPreferences.getInt('lastSong');
       if (id == null) {
         playingSong = songs[0];
@@ -115,6 +134,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         playingSong = songs[playingIndex];
         print(playingSong.displayName);
       }
+      listfetched = true;
     });
   }
 
@@ -122,14 +142,17 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     tabController = new TabController(length: 2, vsync: this, initialIndex: 0);
-    initSp();
-    _listenForPermissionStatus();
-    getPermission();
+    setState(() {
+      listfetched = false;
+    });
+    preparePage();
+
     MyNotification.setListeners('play', () {
       resume();
     });
     MyNotification.setListeners('pause', () async {
       // await MyNotification.hideNotification();
+      print('----------------------------->');
       pause();
     });
     MyNotification.setListeners('next', () {
@@ -157,6 +180,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     // setHandlers();
   }
 
+  preparePage() async {
+    _listenForPermissionStatus();
+    getPermission();
+  }
+
   initSp() async {
     sharedPreferences = await SharedPreferences.getInstance();
   }
@@ -165,7 +193,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-
+    print(
+        '<----------------------------------------------------$listfetched------------->');
     return Scaffold(
         key: tabKey,
         backgroundColor: black,
@@ -230,15 +259,17 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             ? TabBarView(
                 controller: tabController,
                 children: [
-                  MyHome(
-                    showPlayer: showPlayer,
-                    songs: songs,
-                    startMusic: startMusic,
-                    playingIndex: playingIndex,
-                    playingSong: playingSong,
-                    playerState: playerState,
-                    listFetched: listfetched,
-                  ),
+                  listfetched
+                      ? MyHome(
+                          showPlayer: showPlayer,
+                          songs: songs,
+                          startMusic: startMusic,
+                          playingIndex: playingIndex,
+                          playingSong: playingSong,
+                          playerState: playerState,
+                          listFetched: listfetched,
+                        )
+                      : Loader2(),
                   Playlist(
                     songs: songs,
                     playingSong: playingSong,
@@ -422,6 +453,37 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             // callBackToUpdateSong: callBackToUpdateSong,
           );
         });
+    MyNotification.setListeners('play', () {
+      resume();
+    });
+    MyNotification.setListeners('pause', () async {
+      // await MyNotification.hideNotification();
+      print('<-----------------------------');
+      pause();
+    });
+    MyNotification.setListeners('next', () {
+      int newi = nextSong(playingIndex);
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+      startPlayer(songs[newi], newi);
+    });
+    MyNotification.setListeners('prev', () {
+      int newi = prevSong(playingIndex);
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+      startPlayer(songs[newi], newi);
+    });
+    await savePlayMode(list[5]);
     setState(() {
       playingSong = list[0];
       playingIndex = list[1];
@@ -550,72 +612,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     return newi;
   }
 
-  // ---------------------------- CALLBACKS --------------------------
-
-  callBackToUpdateSong(Song ps, int piu, bool s, PlayerState pss) {
-    setState(() {
-      print(
-          'updating song !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-      playingSong = ps;
-      playingIndex = piu;
-      start = s;
-      playerState = pss;
-      try {
-        if (playerState == PlayerState.playing) {
-          _animationController.forward();
-        } else {
-          _animationController.reverse();
-        }
-      } on TickerCanceled {
-        print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ erererrere');
-      }
-    });
-  }
-
-  callBackToState(PlayerState pp, Duration d, Duration p) {
-    setState(() {
-      playerState = pp;
-      if (start) {
-        start = false;
-      }
-      if (playerState == PlayerState.playing) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-      duration = d;
-      position = p;
-    });
-  }
-
-  callBackToStart() {
-    setState(() {
-      start = false;
-    });
-  }
-
-  callBackToStop() {
-    setState(() {
-      playerState = PlayerState.stopped;
-    });
-  }
-
-  callBackToDuration(Duration d) {
-    setState(() {
-      duration = d;
-    });
-  }
-
-  callBackToPosition(Duration p) {
-    setState(() {
-      position = p;
-    });
-  }
-
-  callBackToMode(PlayMode pm) {
-    setState(() {
-      playMode = pm;
-    });
-    print(playMode);
+  savePlayMode(PlayMode pM) async {
+    int ans;
+    if (pM == PlayMode.loop) {
+      ans = 0;
+    } else if (pM == PlayMode.repeat) {
+      ans = 1;
+    } else {
+      ans = 2;
+    }
+    await sharedPreferences.setInt('playMode', ans);
   }
 }

@@ -103,7 +103,7 @@ class _PlayMusicState extends State<PlayMusic>
       pause(true);
     });
     MyNotification.setListeners('next', () {
-      int newi = this.widget.nextSong(playingIndex);
+      int newi = nextSong(playingIndex, false);
 
       startPlayer(this.widget.songs[newi], newi);
     });
@@ -151,7 +151,7 @@ class _PlayMusicState extends State<PlayMusic>
     List<String> dur = duration.toString().split(':');
     print('duraiton is $dur');
     List<String> pos = position.toString().split(':');
-    double h = height * 0.90;
+    double h = height * 0.95;
     return WillPopScope(
       onWillPop: () async {
         await Future.delayed(Duration(microseconds: 1));
@@ -329,16 +329,19 @@ class _PlayMusicState extends State<PlayMusic>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    IconButton(
-                      onPressed: () {
-                        int newi = this.widget.prevSong(playingIndex);
+                    InkWell(
+                      onTap: () {
+                        int newi = prevSong(playingIndex);
                         playingIndex = newi;
                         startPlayer(this.widget.songs[newi], newi);
                       },
-                      icon: Icon(
-                        Icons.skip_previous,
-                        color: orange,
-                        size: 30,
+                      child: Container(
+                        height: h * 0.2,
+                        child: Icon(
+                          Icons.skip_previous,
+                          color: orange,
+                          size: 40,
+                        ),
                       ),
                     ),
                     GestureDetector(
@@ -354,27 +357,32 @@ class _PlayMusicState extends State<PlayMusic>
                           resume(false);
                         }
                       },
-                      child: CircleAvatar(
-                        backgroundColor: orange,
-                        radius: 30,
-                        child: AnimatedIcon(
-                          progress: animationController,
-                          icon: AnimatedIcons.play_pause,
-                          color: white,
-                          size: 35,
+                      child: Container(
+                        height: h * 0.2,
+                        child: CircleAvatar(
+                          backgroundColor: orange,
+                          radius: 30,
+                          child: AnimatedIcon(
+                            progress: animationController,
+                            icon: AnimatedIcons.play_pause,
+                            color: white,
+                            size: 35,
+                          ),
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        int newi = this.widget.nextSong(playingIndex);
-                        playingIndex = newi;
+                    InkWell(
+                      onTap: () async {
+                        int newi = nextSong(playingIndex, false);
                         startPlayer(this.widget.songs[newi], newi);
                       },
-                      icon: Icon(
-                        Icons.skip_next,
-                        size: 30,
-                        color: orange,
+                      child: Container(
+                        height: h * 0.2,
+                        child: Icon(
+                          Icons.skip_next,
+                          size: 40,
+                          color: orange,
+                        ),
                       ),
                     ),
                   ],
@@ -548,7 +556,7 @@ class _PlayMusicState extends State<PlayMusic>
       // this.widget.callBackToPosition(p);
     });
     this.widget.mediaPlayer.setCompletionHandler(() async {
-      int newi = nextSong(playingIndex);
+      int newi = nextSong(playingIndex, true);
       print('------------------------$newi');
       startPlayer(this.widget.songs[newi], newi);
       print('+++++++++++++++++++++++++++++');
@@ -564,12 +572,14 @@ class _PlayMusicState extends State<PlayMusic>
       });
   }
 
-  int nextSong(int i) {
+  int nextSong(int i, bool fromCompletion) {
     int newi;
-    if (playMode == PlayMode.loop) {
-      newi = (i + 1) % this.widget.songs.length;
-    } else if (playMode == PlayMode.repeat) {
-      newi = i;
+    if (playMode != PlayMode.shuffle) {
+      if (fromCompletion) {
+        newi = i;
+      } else {
+        newi = (i + 1) % this.widget.songs.length;
+      }
     } else {
       Random random = new Random();
       newi = random.nextInt(this.widget.songs.length);
@@ -580,6 +590,28 @@ class _PlayMusicState extends State<PlayMusic>
       }
       playingIndex = newi;
       playingSong = this.widget.songs[newi];
+      this.widget.song = playingSong;
+      this.widget.index = playingIndex;
+    });
+    return newi;
+  }
+
+  int prevSong(int i) {
+    int newi;
+    if (playMode != PlayMode.shuffle) {
+      newi = (i - 1) % this.widget.songs.length;
+    } else {
+      Random random = new Random();
+      newi = random.nextInt(this.widget.songs.length);
+    }
+    setState(() {
+      if (start) {
+        start = false;
+      }
+      playingIndex = newi;
+      playingSong = this.widget.songs[newi];
+      this.widget.song = playingSong;
+      this.widget.index = playingIndex;
     });
     return newi;
   }
