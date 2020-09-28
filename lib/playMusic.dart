@@ -36,13 +36,6 @@ class PlayMusic extends StatefulWidget {
       this.start,
       this.nextSong,
       this.playMode,
-      // this.callBackToDuration,
-      // this.callBackToMode,
-      // this.callBackToUpdateSong,
-      // this.callBackToPosition,
-      // this.callBackToStart,
-      // this.randomSong,
-      // this.callBackToState,
       this.position,
       this.playerState,
       this.song,
@@ -104,11 +97,11 @@ class _PlayMusicState extends State<PlayMusic>
     });
     MyNotification.setListeners('next', () {
       int newi = nextSong(playingIndex, false);
-
+      print('-------------------------------------->> $newi');
       startPlayer(this.widget.songs[newi], newi);
     });
     MyNotification.setListeners('prev', () {
-      int newi = this.widget.prevSong(playingIndex);
+      int newi = prevSong(playingIndex);
       startPlayer(this.widget.songs[newi], newi);
     });
     if (this.widget.mediaPlayer != null) {

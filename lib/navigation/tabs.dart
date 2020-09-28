@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/homePage.dart';
 import 'package:music_player/loader.dart';
+import 'package:music_player/newLoad.dart';
 import 'package:music_player/notification.dart';
 import 'package:music_player/playMusic.dart';
 import 'package:music_player/playlist/playlistpage.dart';
@@ -46,7 +47,63 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     ),
   ];
 
-  void _listenForPermissionStatus() async {
+  @override
+  void initState() {
+    super.initState();
+    tabController = new TabController(length: 2, vsync: this, initialIndex: 0);
+    setState(() {
+      listfetched = false;
+      playerState = PlayerState.stopped;
+      playMode = PlayMode.loop;
+      mediaPlayer = new MediaPlayer();
+    });
+    preparePage();
+
+    MyNotification.setListeners('play', () {
+      resume();
+    });
+    MyNotification.setListeners('pause', () async {
+      // await MyNotification.hideNotification();
+      print('----------------------------->');
+      pause();
+    });
+    MyNotification.setListeners('next', () {
+      int newi = nextSong(playingIndex, false);
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+      startPlayer(songs[newi], newi);
+    });
+    MyNotification.setListeners('prev', () {
+      int newi = prevSong(playingIndex);
+      setState(() {
+        playingSong = songs[newi];
+        playingIndex = newi;
+        if (_animationController.status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+      startPlayer(songs[newi], newi);
+    });
+    // setHandlers();
+  }
+
+  Future<void> preparePage() async {
+    await initSp();
+    await _listenForPermissionStatus();
+    await getPermission();
+    await getAllMusic();
+  }
+
+  Future<void> initSp() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+  }
+
+  Future<void> _listenForPermissionStatus() async {
     final status = await _permission.status;
     setState(() => _permissionStatus = status);
   }
@@ -61,14 +118,13 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     });
   }
 
-  getPermission() async {
+  Future<void> getPermission() async {
     await requestPermission(_permission);
     if (_permissionStatus.isDenied) {
       tabKey.currentState.showSnackBar(SnackBar(
         content: Text("Permission Required Restart the App"),
       ));
     } else {
-      await initSp();
       playerState = PlayerState.stopped;
       playMode = PlayMode.loop;
       mediaPlayer = new MediaPlayer();
@@ -78,7 +134,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     }
   }
 
-  getFavList() async {
+  Future<void> getFavList() async {
     List<String> temp = sharedPreferences.getStringList('fav');
     if (temp == null) {
       temp = [];
@@ -88,8 +144,9 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     });
   }
 
-  getAllMusic() async {
+  Future<void> getAllMusic() async {
     songs = await mediaPlayer.getMusic();
+    await getFavList();
     songs.sort((a, b) {
       if ((a.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
               a.title[0].codeUnitAt(0) <= ('z'.codeUnitAt(0))) ||
@@ -114,7 +171,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         }
       }
     });
-    await getFavList();
     setState(() {
       int ans = sharedPreferences.getInt('playMode');
       if (ans == 0) {
@@ -139,62 +195,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   }
 
   @override
-  void initState() {
-    super.initState();
-    tabController = new TabController(length: 2, vsync: this, initialIndex: 0);
-    setState(() {
-      listfetched = false;
-    });
-    preparePage();
-
-    MyNotification.setListeners('play', () {
-      resume();
-    });
-    MyNotification.setListeners('pause', () async {
-      // await MyNotification.hideNotification();
-      print('----------------------------->');
-      pause();
-    });
-    MyNotification.setListeners('next', () {
-      int newi = nextSong(playingIndex);
-      setState(() {
-        playingSong = songs[newi];
-        playingIndex = newi;
-        if (_animationController.status == AnimationStatus.dismissed) {
-          _animationController.forward();
-        }
-      });
-      startPlayer(songs[newi], newi);
-    });
-    MyNotification.setListeners('prev', () {
-      int newi = prevSong(playingIndex);
-      setState(() {
-        playingSong = songs[newi];
-        playingIndex = newi;
-        if (_animationController.status == AnimationStatus.dismissed) {
-          _animationController.forward();
-        }
-      });
-      startPlayer(songs[newi], newi);
-    });
-    // setHandlers();
-  }
-
-  preparePage() async {
-    _listenForPermissionStatus();
-    getPermission();
-  }
-
-  initSp() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-  }
-
-  @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     print(
-        '<----------------------------------------------------$listfetched------------->');
+        '<----------------------------------------------------$tabController------------->');
     return Scaffold(
         key: tabKey,
         backgroundColor: black,
@@ -216,7 +221,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                 ),
                 onSelected: (val) {
                   if (val == 1) {
-                    print('hello seleceted');
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => NewLoad()));
                   } else if (val == 0) {
                     Navigator.push(
                         context,
@@ -255,28 +261,28 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             : Container(
                 color: white,
               ),
-        body: listfetched
-            ? TabBarView(
-                controller: tabController,
-                children: [
-                  listfetched
-                      ? MyHome(
-                          showPlayer: showPlayer,
-                          songs: songs,
-                          startMusic: startMusic,
-                          playingIndex: playingIndex,
-                          playingSong: playingSong,
-                          playerState: playerState,
-                          listFetched: listfetched,
-                        )
-                      : Loader2(),
-                  Playlist(
+        body: TabBarView(
+          controller: tabController,
+          children: [
+            listfetched
+                ? MyHome(
+                    showPlayer: showPlayer,
+                    songs: songs,
+                    startMusic: startMusic,
+                    playingIndex: playingIndex,
+                    playingSong: playingSong,
+                    playerState: playerState,
+                    listFetched: listfetched,
+                  )
+                : Loader2(),
+            listfetched
+                ? Playlist(
                     songs: songs,
                     playingSong: playingSong,
-                  ),
-                ],
-              )
-            : Loader2());
+                  )
+                : Loader2(),
+          ],
+        ));
   }
 
   InkWell bottomContainer(double height, double width) {
@@ -445,24 +451,17 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             index: playingIndex,
             song: playingSong,
             playerState: playerState,
-            // callBackToMode: callBackToMode,
-            // callBackToState: callBackToState,
-            // callBackToStart: callBackToStart,
-            // callBackToDuration: callBackToDuration,
-            // callBackToPosition: callBackToPosition,
-            // callBackToUpdateSong: callBackToUpdateSong,
           );
         });
     MyNotification.setListeners('play', () {
       resume();
     });
     MyNotification.setListeners('pause', () async {
-      // await MyNotification.hideNotification();
       print('<-----------------------------');
       pause();
     });
     MyNotification.setListeners('next', () {
-      int newi = nextSong(playingIndex);
+      int newi = nextSong(playingIndex, false);
       setState(() {
         playingSong = songs[newi];
         playingIndex = newi;
@@ -543,7 +542,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       });
     });
     mediaPlayer.setCompletionHandler(() async {
-      int newi = nextSong(playingIndex);
+      int newi = nextSong(playingIndex, true);
       print(
           'playingIndex is $playingIndex playing song is ${playingSong.displayName}');
       await startPlayer(songs[playingIndex], playingIndex);
@@ -572,12 +571,14 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     return newi;
   }
 
-  int nextSong(int i) {
+  int nextSong(int i, bool fromCompletion) {
     int newi;
-    if (playMode == PlayMode.loop) {
-      newi = (i + 1) % songs.length;
-    } else if (playMode == PlayMode.repeat) {
-      newi = i;
+    if (playMode != PlayMode.shuffle) {
+      if (fromCompletion) {
+        newi = i;
+      } else {
+        newi = (i + 1) % songs.length;
+      }
     } else {
       Random random = new Random();
       newi = random.nextInt(songs.length);
@@ -594,10 +595,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
 
   int prevSong(int i) {
     int newi;
-    if (playMode == PlayMode.loop) {
+    if (playMode != PlayMode.shuffle) {
       newi = (i - 1) % songs.length;
-    } else if (playMode == PlayMode.repeat) {
-      newi = playingIndex;
     } else {
       Random random = new Random();
       newi = random.nextInt(songs.length);

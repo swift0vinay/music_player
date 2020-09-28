@@ -68,7 +68,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     playingIndex = this.widget.playingIndex;
     playingSong = this.widget.playingSong;
     playerState = this.widget.playerState;
-    print('$playerState $playingIndex ${playingSong.displayName}');
+
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return SafeArea(
@@ -78,28 +78,36 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         body: this.widget.listFetched
             ? Column(
                 children: [
-                  Expanded(
-                      child: Scrollbar(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: this.widget.songs.length,
-                      itemBuilder: (context, i) {
-                        String name = this.widget.songs[i].title;
-                        String artist = this.widget.songs[i].artist;
-                        bool played = playingIndex == i ? true : false;
-                        print(played);
-                        if (name.length > 27) {
-                          String s = '${name.substring(0, 28)}...';
-                          name = s;
-                        }
-                        if (artist.length > 30) {
-                          String s = '${artist.substring(0, 31)}...';
-                          artist = s;
-                        }
-                        return musicTile(played, i, name, artist, context);
-                      },
-                    ),
-                  )),
+                  this.widget.songs.isEmpty
+                      ? Center(
+                          child: Text(
+                          "No Songs Found",
+                          style: TextStyle(color: white),
+                        ))
+                      : Expanded(
+                          child: Scrollbar(
+                          child: ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 15.0),
+                            shrinkWrap: true,
+                            itemCount: this.widget.songs.length,
+                            itemBuilder: (context, i) {
+                              String name = this.widget.songs[i].title;
+                              String artist = this.widget.songs[i].artist;
+                              bool played = playingIndex == i ? true : false;
+                              print(played);
+                              if (name.length > 27) {
+                                String s = '${name.substring(0, 28)}...';
+                                name = s;
+                              }
+                              if (artist.length > 30) {
+                                String s = '${artist.substring(0, 31)}...';
+                                artist = s;
+                              }
+                              return musicTile(
+                                  played, i, name, artist, context);
+                            },
+                          ),
+                        )),
                 ],
               )
             : Loader2(),
@@ -128,7 +136,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               this.widget.startMusic(playingSong, playingIndex);
             },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+        padding: EdgeInsets.symmetric(vertical: 5.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
