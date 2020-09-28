@@ -256,11 +256,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             unselectedLabelColor: white,
           ),
         ),
-        bottomNavigationBar: listfetched
-            ? bottomContainer(height, width)
-            : Container(
-                color: white,
-              ),
+        bottomNavigationBar: bottomContainer(listfetched, height, width),
         body: TabBarView(
           controller: tabController,
           children: [
@@ -285,98 +281,105 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         ));
   }
 
-  InkWell bottomContainer(double height, double width) {
-    String name = playingSong.title;
-    String artist = playingSong.artist;
-    if (name.length > 24) {
-      String s = '${name.substring(0, 25)}...';
-      name = s;
-    }
-    if (artist.length > 31) {
-      String s = '${artist.substring(0, 30)}...';
-      artist = s;
-    }
-    return InkWell(
-        onTap: () {
-          showPlayer();
-        },
-        child: Container(
-          height: height * 0.08,
-          width: width,
-          decoration: BoxDecoration(
-              color: mgrey,
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20.0),
-                  topRight: Radius.circular(20.0))),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: width * 0.05,
-              ),
-              SizedBox(
-                width: width * 0.1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: SizedBox(
-                    height: height * 0.05,
-                    width: height * 0.05,
-                    child: playingSong.albumArt == ''
-                        ? PreviewLogo(home: true)
-                        : Image.file(
-                            File('${playingSong.albumArt}'),
-                            fit: BoxFit.cover,
-                          ),
-                  ),
+  bottomContainer(bool listFetched, double height, double width) {
+    if (listFetched) {
+      String name = playingSong.title;
+      String artist = playingSong.artist;
+      if (name.length > 24) {
+        String s = '${name.substring(0, 25)}...';
+        name = s;
+      }
+      if (artist.length > 31) {
+        String s = '${artist.substring(0, 30)}...';
+        artist = s;
+      }
+      return InkWell(
+          onTap: () {
+            showPlayer();
+          },
+          child: Container(
+            height: height * 0.08,
+            width: width,
+            decoration: BoxDecoration(
+                color: mgrey,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.0),
+                    topRight: Radius.circular(20.0))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: width * 0.05,
                 ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(name, style: TextStyle(fontSize: 15, color: white)),
-                    SizedBox(
-                      height: 5.0,
+                SizedBox(
+                  width: width * 0.1,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: SizedBox(
+                      height: height * 0.05,
+                      width: height * 0.05,
+                      child: playingSong.albumArt == ''
+                          ? PreviewLogo(home: true)
+                          : Image.file(
+                              File('${playingSong.albumArt}'),
+                              fit: BoxFit.cover,
+                            ),
                     ),
-                    Text(artist, style: TextStyle(fontSize: 13, color: white)),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-              SizedBox(
-                width: width * 0.1,
-                child: GestureDetector(
-                  onTap: () async {
-                    if (playerState == PlayerState.playing) {
-                      await MyNotification.hideNotification();
-                      pause();
-                    } else {
-                      await MyNotification.showNotification(
-                          playingSong.artist, playingSong.title, true);
-                      resume();
-                    }
-                  },
-                  child: AnimatedIcon(
-                    icon: AnimatedIcons.play_pause,
-                    progress: _animationController,
-                    color: white,
-                    size: 25,
                   ),
                 ),
-              ),
-              SizedBox(
-                width: width * 0.05,
-              ),
-            ],
-          ),
-        ));
+                SizedBox(
+                  width: width * 0.05,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(name, style: TextStyle(fontSize: 15, color: white)),
+                      SizedBox(
+                        height: 5.0,
+                      ),
+                      Text(artist,
+                          style: TextStyle(fontSize: 13, color: white)),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: width * 0.05,
+                ),
+                SizedBox(
+                  width: width * 0.1,
+                  child: GestureDetector(
+                    onTap: () async {
+                      if (playerState == PlayerState.playing) {
+                        await MyNotification.hideNotification();
+                        pause();
+                      } else {
+                        await MyNotification.showNotification(
+                            playingSong.artist, playingSong.title, true);
+                        resume();
+                      }
+                    },
+                    child: AnimatedIcon(
+                      icon: AnimatedIcons.play_pause,
+                      progress: _animationController,
+                      color: white,
+                      size: 25,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: width * 0.05,
+                ),
+              ],
+            ),
+          ));
+    } else {
+      return Container(
+        height: height * 0.08,
+      );
+    }
   }
 
   startMusic(Song song, int index) {
