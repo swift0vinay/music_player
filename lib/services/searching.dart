@@ -1,140 +1,150 @@
-import 'dart:io';
-import 'dart:math';
+import 'dart:collection';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/detailsPage.dart';
-import 'package:flutter/services.dart';
-import 'package:music_player/MediaPlayer.dart';
-import 'package:music_player/loader.dart';
-import 'package:music_player/notification.dart';
-import 'package:music_player/playMusic.dart';
-import 'package:music_player/previewLogo.dart';
-import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/songModel.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class MyHome extends StatefulWidget {
+class SearchSong extends SearchDelegate<Song> {
   List<Song> songs;
-  Song playingSong;
-  Function showPlayer;
-  int playingIndex;
-  Function startMusic;
-  bool listFetched;
-  PlayerState playerState;
-  MyHome({
-    this.playerState,
-    this.startMusic,
-    this.listFetched,
-    this.songs,
-    this.showPlayer,
-    this.playingIndex,
-    this.playingSong,
-  });
+  SearchSong({this.songs});
+
   @override
-  _MyHomeState createState() => _MyHomeState(
-        playingIndex: playingIndex,
-        playingSong: playingSong,
-        playerState: playerState,
-      );
-}
-
-class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
-  Song playingSong;
-  int playingIndex;
-  PlayerState playerState;
-  _MyHomeState({
-    this.playerState,
-    this.playingIndex,
-    this.playingSong,
-  });
-  final key = GlobalKey<ScaffoldState>();
-  SharedPreferences sharedPreferences;
-  @override
-  void initState() {
-    super.initState();
-
-    initSp();
-  }
-
-  initSp() async {
-    sharedPreferences = await SharedPreferences.getInstance();
+  ThemeData appBarTheme(BuildContext context) {
+    // TODO: implement appBarTheme
+    final ThemeData theme = ThemeData(
+        brightness: Brightness.dark,
+        accentColor: white,
+        secondaryHeaderColor: white);
+    return theme;
   }
 
   @override
-  Widget build(BuildContext context) {
-    playingIndex = this.widget.playingIndex;
-    playingSong = this.widget.playingSong;
-    playerState = this.widget.playerState;
+  // TODO: implement searchFieldLabel
+  String get searchFieldLabel => "Search Song";
+  @override
+  // TODO: implement searchFieldStyle
+  TextStyle get searchFieldStyle => TextStyle(color: white, fontSize: 15);
 
-    double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: black,
-        key: key,
-        body: this.widget.listFetched
-            ? Column(
-                children: [
-                  this.widget.songs.isEmpty
-                      ? Center(
-                          child: Text(
-                          "No Songs Found",
-                          style: TextStyle(color: white),
-                        ))
-                      : Expanded(
-                          child: Scrollbar(
-                          child: ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 15.0),
-                            shrinkWrap: true,
-                            itemCount: this.widget.songs.length,
-                            itemBuilder: (context, i) {
-                              String name = this.widget.songs[i].title;
-                              String artist = this.widget.songs[i].artist;
-                              bool played = playingIndex == i ? true : false;
-                              print(played);
-                              if (name.length > 27) {
-                                String s = '${name.substring(0, 28)}...';
-                                name = s;
-                              }
-                              if (artist.length > 30) {
-                                String s = '${artist.substring(0, 31)}...';
-                                artist = s;
-                              }
-                              return musicTile(
-                                  played, i, name, artist, context);
-                            },
-                          ),
-                        )),
-                ],
-              )
-            : Loader2(),
-      ),
+  @override
+  // TODO: implement textInputAction
+  TextInputAction get textInputAction => TextInputAction.search;
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        color: orange,
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      )
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        Navigator.pop(context);
+      },
     );
   }
 
-  InkWell musicTile(
-    bool played,
-    int i,
-    String name,
-    String artist,
-    BuildContext context,
-  ) {
+  @override
+  Widget buildResults(BuildContext context) {
+    return null;
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    double width = MediaQuery.of(context).size.width - 50;
+    double height = MediaQuery.of(context).size.height;
+    List<Song> suggestions = songs;
+    if (query.isEmpty) {
+      SplayTreeSet suggestset = new SplayTreeSet();
+      suggestions.forEach((element) {
+        suggestset.add(element.title.substring(0, 1).toUpperCase());
+      });
+      return Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [orange, Colors.red[100]],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight)),
+        child: GridView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+            itemCount: suggestset.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                mainAxisSpacing: 10.0,
+                crossAxisCount: 3,
+                crossAxisSpacing: 10.0),
+            itemBuilder: (context, i) {
+              return InkWell(
+                onTap: () {
+                  query = suggestset.elementAt(i);
+                },
+                child: Container(
+                  width: width / 3,
+                  height: width / 3,
+                  decoration: BoxDecoration(
+                      color: black, borderRadius: BorderRadius.circular(20.0)),
+                  child: Center(
+                    child: Text(
+                      suggestset.elementAt(i),
+                      style: TextStyle(color: orange, fontSize: 30),
+                    ),
+                  ),
+                ),
+              );
+            }),
+      );
+    } else {
+      List<Song> suggests = List.from(songs.where((element) =>
+          element.title.toLowerCase().startsWith(query.toLowerCase())));
+      return Container(
+          color: black,
+          height: height,
+          child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 15.0),
+              shrinkWrap: true,
+              itemCount: suggests.length,
+              itemBuilder: (context, i) {
+                String name = suggests[i].title;
+                String artist = suggests[i].artist;
+                // bool played = playingIndex == i ? true : false;
+                // print(played);
+                if (name.length > 27) {
+                  String s = '${name.substring(0, 28)}...';
+                  name = s;
+                }
+                if (artist.length > 30) {
+                  String s = '${artist.substring(0, 31)}...';
+                  artist = s;
+                }
+                return musicTile(false, i, name, artist, context, suggests);
+              }));
+    }
+  }
+
+  InkWell musicTile(bool played, int i, String name, String artist,
+      BuildContext context, List<Song> suggests) {
     return InkWell(
-      onTap: played
-          ? () {
-              this.widget.showPlayer();
-            }
-          : () {
-              setState(() {
-                playingSong = this.widget.songs[i];
-                playingIndex = i;
-                playerState = PlayerState.playing;
-              });
-              this.widget.startMusic(playingSong, playingIndex);
-            },
+      // onTap: played
+      //     ? () {
+      //         this.widget.showPlayer();
+      //       }
+      //     : () {
+      //         setState(() {
+      //           playingSong = this.widget.songs[i];
+      //           playingIndex = i;
+      //           playerState = PlayerState.playing;
+      //         });
+      //         this.widget.startMusic(playingSong, playingIndex);
+      //       },
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 5.0),
         child: Row(
@@ -183,18 +193,19 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ),
             Row(
               children: [
-                played
-                    ? (playerState == PlayerState.playing
-                        ? Loader1()
-                        : Container())
-                    : Container(),
+                // played
+                //     ? (playerState == PlayerState.playing
+                //         ? Loader1()
+                //         : Container())
+                //     :
+                Container(),
                 IconButton(
                   icon: Icon(
                     Icons.more_horiz,
                     color: white.withOpacity(0.5),
                   ),
                   onPressed: () {
-                    myBottomSheet(context, this.widget.songs[i]);
+                    myBottomSheet(context, suggests[i]);
                   },
                 ),
               ],

@@ -7,7 +7,7 @@ import 'package:music_player/previewLogo.dart';
 import 'package:music_player/songModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:music_player/notification.dart';
-import 'constants.dart';
+import '../constants.dart';
 
 class PlayMusic extends StatefulWidget {
   MediaPlayer mediaPlayer;
@@ -96,12 +96,12 @@ class _PlayMusicState extends State<PlayMusic>
       pause(true);
     });
     MyNotification.setListeners('next', () {
-      int newi = nextSong(playingIndex, false);
+      int newi = this.widget.nextSong(playingIndex, false, playMode);
       print('-------------------------------------->> $newi');
       startPlayer(this.widget.songs[newi], newi);
     });
     MyNotification.setListeners('prev', () {
-      int newi = prevSong(playingIndex);
+      int newi = this.widget.prevSong(playingIndex);
       startPlayer(this.widget.songs[newi], newi);
     });
     if (this.widget.mediaPlayer != null) {
@@ -128,12 +128,12 @@ class _PlayMusicState extends State<PlayMusic>
 
   @override
   Widget build(BuildContext context) {
-    String name = this.widget.song.title;
+    String name = playingSong.title;
     if (name.length > 21) {
       String s = '${name.substring(0, 22)}...';
       name = s;
     }
-    String artist = this.widget.song.artist;
+    String artist = playingSong.artist;
     if (artist.length > 31) {
       String s = '${artist.substring(0, 30)}...';
       artist = s;
@@ -142,7 +142,6 @@ class _PlayMusicState extends State<PlayMusic>
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     List<String> dur = duration.toString().split(':');
-    print('duraiton is $dur');
     List<String> pos = position.toString().split(':');
     double h = height * 0.95;
     return WillPopScope(
@@ -161,21 +160,32 @@ class _PlayMusicState extends State<PlayMusic>
         return true;
       },
       child: GestureDetector(
-        onVerticalDragUpdate: (details) {
-          if (details.delta.dy < 0) {
-            print('swipeee down');
-            List<dynamic> list = [
-              playingSong,
-              playingIndex,
-              duration,
-              position,
-              playerState,
-              playMode,
-              start
-            ];
-            Navigator.pop(context, list);
-          }
-        },
+        // onVerticalDragUpdate: (details) {
+        //   // Note: Sensitivity is integer used when you don't want to mess up vertical drag
+        //   if (details.delta.dx > 4.5) {
+        //     // Right Swipe
+        //   } else if (details.delta.dx < -4.5) {
+        //     //Left Swipe
+        //   }
+        // },
+        // onVerticalDragStart: (details) => {
+
+        // // },
+        // onPanUpdate: (details) {
+        //   if (details.delta.dy < 0) {
+        //     print('swipeee down');
+        //     List<dynamic> list = [
+        //       playingSong,
+        //       playingIndex,
+        //       duration,
+        //       position,
+        //       playerState,
+        //       playMode,
+        //       start
+        //     ];
+        //     Navigator.pop(context, list);
+        //   }
+        // },
         child: Container(
           height: h,
           decoration: BoxDecoration(
@@ -189,7 +199,7 @@ class _PlayMusicState extends State<PlayMusic>
               divider(h),
               SizedBox(
                 width: width * 0.1,
-                height: h * 0.005,
+                height: h * 0.001,
                 child: Center(
                   child: Divider(
                     color: white.withOpacity(0.5),
@@ -222,7 +232,7 @@ class _PlayMusicState extends State<PlayMusic>
                       child: SizedBox(
                           width: h * 0.4,
                           height: h * 0.4,
-                          child: this.widget.song.albumArt == ''
+                          child: playingSong.albumArt == ''
                               ? PreviewLogo(home: false)
                               : Image.file(
                                   File('${playingSong.albumArt}'),
@@ -324,7 +334,7 @@ class _PlayMusicState extends State<PlayMusic>
                   children: [
                     InkWell(
                       onTap: () {
-                        int newi = prevSong(playingIndex);
+                        int newi = this.widget.prevSong(playingIndex);
                         playingIndex = newi;
                         startPlayer(this.widget.songs[newi], newi);
                       },
@@ -366,7 +376,9 @@ class _PlayMusicState extends State<PlayMusic>
                     ),
                     InkWell(
                       onTap: () async {
-                        int newi = nextSong(playingIndex, false);
+                        int newi =
+                            this.widget.nextSong(playingIndex, false, playMode);
+                        print(newi);
                         startPlayer(this.widget.songs[newi], newi);
                       },
                       child: Container(
@@ -549,8 +561,8 @@ class _PlayMusicState extends State<PlayMusic>
       // this.widget.callBackToPosition(p);
     });
     this.widget.mediaPlayer.setCompletionHandler(() async {
-      int newi = nextSong(playingIndex, true);
-      print('------------------------$newi');
+      int newi = this.widget.nextSong(playingIndex, true, playMode);
+      print('(((((((((((((((((((((((((((((((((((((((((((((( $newi');
       startPlayer(this.widget.songs[newi], newi);
       print('+++++++++++++++++++++++++++++');
     });
@@ -565,49 +577,51 @@ class _PlayMusicState extends State<PlayMusic>
       });
   }
 
-  int nextSong(int i, bool fromCompletion) {
-    int newi;
-    if (playMode != PlayMode.shuffle) {
-      if (fromCompletion) {
-        newi = i;
-      } else {
-        newi = (i + 1) % this.widget.songs.length;
-      }
-    } else {
-      Random random = new Random();
-      newi = random.nextInt(this.widget.songs.length);
-    }
-    setState(() {
-      if (start) {
-        start = false;
-      }
-      playingIndex = newi;
-      playingSong = this.widget.songs[newi];
-      this.widget.song = playingSong;
-      this.widget.index = playingIndex;
-    });
-    return newi;
-  }
+  // int nextSong(int i, bool fromCompletion) {
+  //   int newi;
+  //   if (playMode != PlayMode.shuffle) {
+  //     if (fromCompletion) {
+  //       newi = i;
+  //     } else {
+  //       newi = (i + 1) % this.widget.songs.length;
+  //     }
+  //   } else {
+  //     Random random = new Random();
+  //     newi = random.nextInt(this.widget.songs.length);
+  //   }
+  //   if (onScreen) {
+  //     setState(() {
+  //       if (start) {
+  //         start = false;
+  //       }
+  //       playingIndex = newi;
+  //       playingSong = this.widget.songs[newi];
+  //       this.widget.song = playingSong;
+  //       this.widget.index = playingIndex;
+  //     });
+  //   }
+  //   return newi;
+  // }
 
-  int prevSong(int i) {
-    int newi;
-    if (playMode != PlayMode.shuffle) {
-      newi = (i - 1) % this.widget.songs.length;
-    } else {
-      Random random = new Random();
-      newi = random.nextInt(this.widget.songs.length);
-    }
-    setState(() {
-      if (start) {
-        start = false;
-      }
-      playingIndex = newi;
-      playingSong = this.widget.songs[newi];
-      this.widget.song = playingSong;
-      this.widget.index = playingIndex;
-    });
-    return newi;
-  }
+  // int prevSong(int i) {
+  //   int newi;
+  //   if (playMode != PlayMode.shuffle) {
+  //     newi = (i - 1) % this.widget.songs.length;
+  //   } else {
+  //     Random random = new Random();
+  //     newi = random.nextInt(this.widget.songs.length);
+  //   }
+  //   setState(() {
+  //     if (start) {
+  //       start = false;
+  //     }
+  //     playingIndex = newi;
+  //     playingSong = this.widget.songs[newi];
+  //     this.widget.song = playingSong;
+  //     this.widget.index = playingIndex;
+  //   });
+  //   return newi;
+  // }
 
   addFav() {
     favs.add(playingSong.id.toString());

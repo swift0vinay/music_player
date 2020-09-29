@@ -2,14 +2,15 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:music_player/MediaPlayer.dart';
-import 'package:music_player/homePage.dart';
+import 'package:music_player/navigation/homePage.dart';
 import 'package:music_player/loader.dart';
 import 'package:music_player/newLoad.dart';
 import 'package:music_player/notification.dart';
-import 'package:music_player/playMusic.dart';
+import 'package:music_player/navigation/playMusic.dart';
 import 'package:music_player/playlist/playlistpage.dart';
 import 'package:music_player/previewLogo.dart';
 import 'package:music_player/services/scanMusic.dart';
+import 'package:music_player/services/searching.dart';
 import 'package:music_player/songModel.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,7 +69,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       pause();
     });
     MyNotification.setListeners('next', () {
-      int newi = nextSong(playingIndex, false);
+      int newi = nextSong(playingIndex, false, playMode);
       setState(() {
         playingSong = songs[newi];
         playingIndex = newi;
@@ -198,8 +199,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    print(
-        '<----------------------------------------------------$tabController------------->');
     return Scaffold(
         key: tabKey,
         backgroundColor: black,
@@ -212,7 +211,10 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                 color: orange,
               ),
               color: white,
-              onPressed: () {},
+              onPressed: () {
+                showSearch(
+                    context: context, delegate: SearchSong(songs: songs));
+              },
             ),
             PopupMenuButton(
                 icon: Icon(
@@ -456,6 +458,24 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             playerState: playerState,
           );
         });
+
+    await savePlayMode(list[5]);
+    setState(() {
+      playingSong = list[0];
+      playingIndex = list[1];
+      duration = list[2];
+      position = list[3];
+      playerState = list[4];
+      playMode = list[5];
+      start = list[6];
+      if (playerState == PlayerState.playing) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+    setHandlers();
+    print('(((((((((((((((((((((((((((((((((((((((((((((( $playingIndex');
     MyNotification.setListeners('play', () {
       resume();
     });
@@ -464,7 +484,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       pause();
     });
     MyNotification.setListeners('next', () {
-      int newi = nextSong(playingIndex, false);
+      int newi = nextSong(playingIndex, false, playMode);
       setState(() {
         playingSong = songs[newi];
         playingIndex = newi;
@@ -484,21 +504,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         }
       });
       startPlayer(songs[newi], newi);
-    });
-    await savePlayMode(list[5]);
-    setState(() {
-      playingSong = list[0];
-      playingIndex = list[1];
-      duration = list[2];
-      position = list[3];
-      playerState = list[4];
-      playMode = list[5];
-      start = list[6];
-      if (playerState == PlayerState.playing) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
     });
   }
 
@@ -545,7 +550,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       });
     });
     mediaPlayer.setCompletionHandler(() async {
-      int newi = nextSong(playingIndex, true);
+      int newi = nextSong(playingIndex, true, playMode);
       print(
           'playingIndex is $playingIndex playing song is ${playingSong.displayName}');
       await startPlayer(songs[playingIndex], playingIndex);
@@ -574,10 +579,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     return newi;
   }
 
-  int nextSong(int i, bool fromCompletion) {
+  int nextSong(int i, bool fromCompletion, PlayMode pm) {
     int newi;
-    if (playMode != PlayMode.shuffle) {
-      if (fromCompletion) {
+    print(pm);
+    if (pm != PlayMode.shuffle) {
+      if (fromCompletion && pm == PlayMode.repeat) {
         newi = i;
       } else {
         newi = (i + 1) % songs.length;
@@ -593,6 +599,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       playingIndex = newi;
       playingSong = songs[newi];
     });
+    print('(((((((((((((((((((((((((((((((((((((((((((((( $playingIndex $newi');
+
     return newi;
   }
 
