@@ -33,13 +33,18 @@ class _ShowFavState extends State<ShowFav> {
         ),
       ),
       body: ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
         itemCount: favs.length,
         itemBuilder: (context, i) {
-          String name = this.widget.songs[i].title;
-          String artist = this.widget.songs[i].artist;
+          int index = this
+              .widget
+              .songs
+              .indexWhere((element) => element.id.toString() == favs[i]);
+          String name = this.widget.songs[index].title;
+          String artist = this.widget.songs[index].artist;
           bool played = false;
           if (this.widget.playingSong != null) {
-            played = this.widget.songs[i].id == this.widget.playingSong.id
+            played = this.widget.songs[index].id == this.widget.playingSong.id
                 ? true
                 : false;
           }
