@@ -213,7 +213,15 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
               color: white,
               onPressed: () {
                 showSearch(
-                    context: context, delegate: SearchSong(songs: songs));
+                    context: context,
+                    delegate: SearchSong(
+                        songs: songs,
+                        playMode: playMode,
+                        playerState: playerState,
+                        playingIndex: playingIndex,
+                        playingSong: playingSong,
+                        showPlayer: showPlayer,
+                        startMusic: startMusic));
               },
             ),
             PopupMenuButton(

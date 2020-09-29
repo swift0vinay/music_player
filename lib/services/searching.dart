@@ -1,13 +1,29 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/detailsPage.dart';
+import 'package:music_player/loader.dart';
 import 'package:music_player/songModel.dart';
 
 class SearchSong extends SearchDelegate<Song> {
   List<Song> songs;
-  SearchSong({this.songs});
+  int playingIndex;
+  Song playingSong;
+  PlayerState playerState;
+  PlayMode playMode;
+  MediaPlayer mediaPlayer;
+  Function showPlayer;
+  Function startMusic;
+  SearchSong(
+      {this.songs,
+      this.showPlayer,
+      this.playMode,
+      this.playerState,
+      this.startMusic,
+      this.playingIndex,
+      this.playingSong});
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -69,6 +85,7 @@ class SearchSong extends SearchDelegate<Song> {
         suggestset.add(element.title.substring(0, 1).toUpperCase());
       });
       return Container(
+        height: height,
         decoration: BoxDecoration(
             gradient: LinearGradient(
                 colors: [orange, Colors.red[100]],
@@ -108,43 +125,49 @@ class SearchSong extends SearchDelegate<Song> {
       return Container(
           color: black,
           height: height,
-          child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 15.0),
-              shrinkWrap: true,
-              itemCount: suggests.length,
-              itemBuilder: (context, i) {
-                String name = suggests[i].title;
-                String artist = suggests[i].artist;
-                // bool played = playingIndex == i ? true : false;
-                // print(played);
-                if (name.length > 27) {
-                  String s = '${name.substring(0, 28)}...';
-                  name = s;
-                }
-                if (artist.length > 30) {
-                  String s = '${artist.substring(0, 31)}...';
-                  artist = s;
-                }
-                return musicTile(false, i, name, artist, context, suggests);
-              }));
+          child: suggests.isEmpty
+              ? Center(
+                  child: Text('No Such Song', style: TextStyle(color: white)))
+              : ListView.builder(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0),
+                  shrinkWrap: true,
+                  itemCount: suggests.length,
+                  itemBuilder: (context, i) {
+                    String name = suggests[i].title;
+                    String artist = suggests[i].artist;
+                    int indexofSonginList = songs
+                        .indexWhere((element) => element.id == suggests[i].id);
+                    bool played =
+                        playingIndex == indexofSonginList ? true : false;
+                    if (name.length > 27) {
+                      String s = '${name.substring(0, 28)}...';
+                      name = s;
+                    }
+                    if (artist.length > 30) {
+                      String s = '${artist.substring(0, 31)}...';
+                      artist = s;
+                    }
+                    return musicTile(
+                        played, i, name, artist, context, suggests);
+                  }));
     }
   }
 
   InkWell musicTile(bool played, int i, String name, String artist,
       BuildContext context, List<Song> suggests) {
     return InkWell(
-      // onTap: played
-      //     ? () {
-      //         this.widget.showPlayer();
-      //       }
-      //     : () {
-      //         setState(() {
-      //           playingSong = this.widget.songs[i];
-      //           playingIndex = i;
-      //           playerState = PlayerState.playing;
-      //         });
-      //         this.widget.startMusic(playingSong, playingIndex);
-      //       },
+      onTap: played
+          ? () {
+              showPlayer();
+            }
+          : () async {
+              playingSong = suggests[i];
+              playingIndex =
+                  songs.indexWhere((element) => element.id == playingSong.id);
+              playerState = PlayerState.playing;
+              await startMusic(playingSong, playingIndex);
+              Navigator.pop(context);
+            },
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 5.0),
         child: Row(
@@ -193,12 +216,11 @@ class SearchSong extends SearchDelegate<Song> {
             ),
             Row(
               children: [
-                // played
-                //     ? (playerState == PlayerState.playing
-                //         ? Loader1()
-                //         : Container())
-                //     :
-                Container(),
+                played
+                    ? (playerState == PlayerState.playing
+                        ? Loader1()
+                        : Container())
+                    : Container(),
                 IconButton(
                   icon: Icon(
                     Icons.more_horiz,
