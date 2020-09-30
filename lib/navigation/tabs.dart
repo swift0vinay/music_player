@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/navigation/homePage.dart';
 import 'package:music_player/loader.dart';
@@ -211,17 +212,21 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                 color: orange,
               ),
               color: white,
-              onPressed: () {
-                showSearch(
-                    context: context,
-                    delegate: SearchSong(
-                        songs: songs,
-                        playMode: playMode,
-                        playerState: playerState,
-                        playingIndex: playingIndex,
-                        playingSong: playingSong,
-                        showPlayer: showPlayer,
-                        startMusic: startMusic));
+              onPressed: () async {
+                if (listfetched) {
+                  await HapticFeedback.mediumImpact().then((value) => {
+                        showSearch(
+                            context: context,
+                            delegate: SearchSong(
+                                songs: songs,
+                                playMode: playMode,
+                                playerState: playerState,
+                                playingIndex: playingIndex,
+                                playingSong: playingSong,
+                                showPlayer: showPlayer,
+                                startMusic: startMusic))
+                      });
+                }
               },
             ),
             PopupMenuButton(
@@ -468,6 +473,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         });
 
     await savePlayMode(list[5]);
+    print("doneeeeeeeeeeeeeeeeeeeeeeeeeeee");
     setState(() {
       playingSong = list[0];
       playingIndex = list[1];

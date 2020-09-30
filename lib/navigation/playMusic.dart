@@ -160,6 +160,27 @@ class _PlayMusicState extends State<PlayMusic>
         return true;
       },
       child: GestureDetector(
+        onVerticalDragStart: (details) {
+          print(details);
+        },
+        onVerticalDragEnd: (details) {
+          print(details);
+        },
+        onVerticalDragUpdate: (details) async {
+          // Note: Sensitivity is integer used when you don't want to mess up vertical drag
+          if (details.delta.dy > 4.5) {
+            List<dynamic> list = [
+              playingSong,
+              playingIndex,
+              duration,
+              position,
+              playerState,
+              playMode,
+              start
+            ];
+            Navigator.pop(context, list);
+          }
+        },
         // onVerticalDragUpdate: (details) {
         //   // Note: Sensitivity is integer used when you don't want to mess up vertical drag
         //   if (details.delta.dx > 4.5) {
@@ -576,52 +597,6 @@ class _PlayMusicState extends State<PlayMusic>
         });
       });
   }
-
-  // int nextSong(int i, bool fromCompletion) {
-  //   int newi;
-  //   if (playMode != PlayMode.shuffle) {
-  //     if (fromCompletion) {
-  //       newi = i;
-  //     } else {
-  //       newi = (i + 1) % this.widget.songs.length;
-  //     }
-  //   } else {
-  //     Random random = new Random();
-  //     newi = random.nextInt(this.widget.songs.length);
-  //   }
-  //   if (onScreen) {
-  //     setState(() {
-  //       if (start) {
-  //         start = false;
-  //       }
-  //       playingIndex = newi;
-  //       playingSong = this.widget.songs[newi];
-  //       this.widget.song = playingSong;
-  //       this.widget.index = playingIndex;
-  //     });
-  //   }
-  //   return newi;
-  // }
-
-  // int prevSong(int i) {
-  //   int newi;
-  //   if (playMode != PlayMode.shuffle) {
-  //     newi = (i - 1) % this.widget.songs.length;
-  //   } else {
-  //     Random random = new Random();
-  //     newi = random.nextInt(this.widget.songs.length);
-  //   }
-  //   setState(() {
-  //     if (start) {
-  //       start = false;
-  //     }
-  //     playingIndex = newi;
-  //     playingSong = this.widget.songs[newi];
-  //     this.widget.song = playingSong;
-  //     this.widget.index = playingIndex;
-  //   });
-  //   return newi;
-  // }
 
   addFav() {
     favs.add(playingSong.id.toString());
