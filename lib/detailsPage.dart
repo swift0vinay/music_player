@@ -19,6 +19,11 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   Widget build(BuildContext context) {
     size = ((this.widget.song.size) / 1000000).toStringAsFixed(2);
+    print((this.widget.song.duration / 60000).toDouble());
+    String min = (this.widget.song.duration / 60000).toStringAsFixed(2);
+    List<String> ss = min.split('.');
+    int minutes = int.parse(ss[0]);
+    int seconds = int.parse(ss[1]) - 20;
     double width = MediaQuery.of(context).size.width - 20;
     return SafeArea(
       child: Scaffold(
@@ -163,7 +168,7 @@ class _DetailsPageState extends State<DetailsPage> {
                           child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                '${this.widget.song.duration}',
+                                '$minutes:$seconds',
                                 style: style2,
                               ))),
                       SizedBox(

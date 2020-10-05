@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/MediaPlayer.dart';
 import 'package:music_player/constants.dart';
@@ -76,6 +77,7 @@ class SearchSong extends SearchDelegate<Song> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    ScrollController sc = new ScrollController();
     double width = MediaQuery.of(context).size.width - 50;
     double height = MediaQuery.of(context).size.height;
     List<Song> suggestions = songs;
@@ -91,33 +93,39 @@ class SearchSong extends SearchDelegate<Song> {
                 colors: [orange, Colors.red[100]],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight)),
-        child: GridView.builder(
-            shrinkWrap: true,
-            padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-            itemCount: suggestset.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                mainAxisSpacing: 10.0,
-                crossAxisCount: 3,
-                crossAxisSpacing: 10.0),
-            itemBuilder: (context, i) {
-              return InkWell(
-                onTap: () {
-                  query = suggestset.elementAt(i);
-                },
-                child: Container(
-                  width: width / 3,
-                  height: width / 3,
-                  decoration: BoxDecoration(
-                      color: black, borderRadius: BorderRadius.circular(20.0)),
-                  child: Center(
-                    child: Text(
-                      suggestset.elementAt(i),
-                      style: TextStyle(color: orange, fontSize: 30),
+        child: DraggableScrollbar.semicircle(
+          labelConstraints: BoxConstraints.tightFor(width: 80.0, height: 30.0),
+          controller: sc,
+          child: GridView.builder(
+              controller: sc,
+              shrinkWrap: true,
+              padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+              itemCount: suggestset.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  mainAxisSpacing: 10.0,
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10.0),
+              itemBuilder: (context, i) {
+                return InkWell(
+                  onTap: () {
+                    query = suggestset.elementAt(i);
+                  },
+                  child: Container(
+                    width: width / 3,
+                    height: width / 3,
+                    decoration: BoxDecoration(
+                        color: black,
+                        borderRadius: BorderRadius.circular(20.0)),
+                    child: Center(
+                      child: Text(
+                        suggestset.elementAt(i),
+                        style: TextStyle(color: orange, fontSize: 30),
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+        ),
       );
     } else {
       List<Song> suggests = List.from(songs.where((element) =>
@@ -128,28 +136,34 @@ class SearchSong extends SearchDelegate<Song> {
           child: suggests.isEmpty
               ? Center(
                   child: Text('No Such Song', style: TextStyle(color: white)))
-              : ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0),
-                  shrinkWrap: true,
-                  itemCount: suggests.length,
-                  itemBuilder: (context, i) {
-                    String name = suggests[i].title;
-                    String artist = suggests[i].artist;
-                    int indexofSonginList = songs
-                        .indexWhere((element) => element.id == suggests[i].id);
-                    bool played =
-                        playingIndex == indexofSonginList ? true : false;
-                    if (name.length > 27) {
-                      String s = '${name.substring(0, 28)}...';
-                      name = s;
-                    }
-                    if (artist.length > 30) {
-                      String s = '${artist.substring(0, 31)}...';
-                      artist = s;
-                    }
-                    return musicTile(
-                        played, i, name, artist, context, suggests);
-                  }));
+              : DraggableScrollbar.semicircle(
+                  controller: sc,
+                  labelConstraints:
+                      BoxConstraints.tightFor(width: 80.0, height: 30.0),
+                  child: ListView.builder(
+                      controller: sc,
+                      padding: EdgeInsets.symmetric(horizontal: 15.0),
+                      shrinkWrap: true,
+                      itemCount: suggests.length,
+                      itemBuilder: (context, i) {
+                        String name = suggests[i].title;
+                        String artist = suggests[i].artist;
+                        int indexofSonginList = songs.indexWhere(
+                            (element) => element.id == suggests[i].id);
+                        bool played =
+                            playingIndex == indexofSonginList ? true : false;
+                        if (name.length > 27) {
+                          String s = '${name.substring(0, 28)}...';
+                          name = s;
+                        }
+                        if (artist.length > 30) {
+                          String s = '${artist.substring(0, 31)}...';
+                          artist = s;
+                        }
+                        return musicTile(
+                            played, i, name, artist, context, suggests);
+                      }),
+                ));
     }
   }
 

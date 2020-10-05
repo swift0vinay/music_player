@@ -472,7 +472,9 @@ class _PlayMusicState extends State<PlayMusic>
                                 ),
                       IconButton(
                         icon: Icon(Icons.more_horiz),
-                        onPressed: () {},
+                        onPressed: () {
+                          myBottomSheet(context, playingSong);
+                        },
                         color: white.withOpacity(0.5),
                       ),
                     ],

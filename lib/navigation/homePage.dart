@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
@@ -14,6 +15,7 @@ import 'package:music_player/previewLogo.dart';
 import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/songModel.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHome extends StatefulWidget {
@@ -45,6 +47,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   Song playingSong;
   int playingIndex;
   PlayerState playerState;
+  ScrollController scrollController;
   _MyHomeState({
     this.playerState,
     this.playingIndex,
@@ -55,7 +58,7 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
+    scrollController = new ScrollController();
     initSp();
   }
 
@@ -68,7 +71,6 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     playingIndex = this.widget.playingIndex;
     playingSong = this.widget.playingSong;
     playerState = this.widget.playerState;
-
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return SafeArea(
@@ -85,29 +87,39 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           style: TextStyle(color: white),
                         ))
                       : Expanded(
-                          child: Scrollbar(
-                          child: ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 15.0),
-                            shrinkWrap: true,
-                            itemCount: this.widget.songs.length,
-                            itemBuilder: (context, i) {
-                              String name = this.widget.songs[i].title;
-                              String artist = this.widget.songs[i].artist;
-                              bool played = playingIndex == i ? true : false;
-                              // print(played);
-                              if (name.length > 27) {
-                                String s = '${name.substring(0, 28)}...';
-                                name = s;
-                              }
-                              if (artist.length > 30) {
-                                String s = '${artist.substring(0, 31)}...';
-                                artist = s;
-                              }
-                              return musicTile(
-                                  played, i, name, artist, context);
-                            },
+                          child: DraggableScrollbar.semicircle(
+                            labelConstraints: BoxConstraints.tightFor(
+                                width: 80.0, height: 30.0),
+                            controller: scrollController,
+                            child: ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 15.0),
+                              shrinkWrap: true,
+                              controller: scrollController,
+                              itemCount: this.widget.songs.length,
+                              itemBuilder: (context, i) {
+                                String name = this.widget.songs[i].title;
+                                String artist = this.widget.songs[i].artist;
+                                bool played = playingIndex == i ? true : false;
+                                // print(played);
+                                if (name.length > 27) {
+                                  String s = '${name.substring(0, 28)}...';
+                                  name = s;
+                                }
+                                if (artist.length > 30) {
+                                  String s = '${artist.substring(0, 31)}...';
+                                  artist = s;
+                                }
+                                return musicTile(
+                                  played,
+                                  i,
+                                  name,
+                                  artist,
+                                  context,
+                                );
+                              },
+                            ),
                           ),
-                        )),
+                        ),
                 ],
               )
             : Loader2(),
@@ -203,81 +215,5 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  myBottomSheet(BuildContext context, Song song) {
-    print(song.artist);
-    print(song.duration);
-    print(song.artistId);
-    int dur = song.duration;
-    String min = (dur / 60).toStringAsFixed(0);
-    double width = MediaQuery.of(context).size.width;
-    int minutes = int.parse(min);
-    int seconds = dur % 60;
-    return showModalBottomSheet(
-        context: context,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        builder: (context) {
-          return Container(
-              height: 200,
-              decoration: BoxDecoration(
-                  color: black.withOpacity(0.8),
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0))),
-              width: MediaQuery.of(context).size.width,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  InkWell(
-                      onTap: () {
-                        print('send song');
-                      },
-                      child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 5.0),
-                          child: Text(
-                            "Send Song",
-                            style: TextStyle(fontSize: 18.0, color: white),
-                          ))),
-                  InkWell(
-                      onTap: () async {
-                        await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailsPage(
-                                song: song,
-                              ),
-                            ));
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 5.0),
-                          child: Text(
-                            "Details",
-                            style: TextStyle(fontSize: 18.0, color: white),
-                          ))),
-                  SizedBox(
-                    width: width * 0.8,
-                    child: Divider(
-                      height: 5.0,
-                      color: white.withOpacity(0.3),
-                      thickness: 0.5,
-                    ),
-                  ),
-                  InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 5.0),
-                          child: Text(
-                            "Cancel",
-                            style: TextStyle(fontSize: 18.0, color: white),
-                          ))),
-                ],
-              ));
-        });
   }
 }

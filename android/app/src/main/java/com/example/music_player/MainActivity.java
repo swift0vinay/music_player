@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -305,8 +306,13 @@ public class MainActivity extends FlutterActivity {
     private void getAllSongs() {
         ContentResolver contentResolver = getContentResolver();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        File dir = Environment.getExternalStorageDirectory();
-        String path = dir.getAbsolutePath();
+        String path=null;
+        try {
+            path = getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(),0).applicationInfo.dataDir;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        Log.w("asfasf","path is "+path);
         Cursor cursor = contentResolver.query(uri, null, MediaStore.Audio.Media.IS_MUSIC + " = 1", null, null);
         if (cursor == null) {
             Log.w("error1", "quert failed");
@@ -340,7 +346,7 @@ public class MainActivity extends FlutterActivity {
 
 //                    Log.w("patyh","path is "+path);
                 if (data.endsWith(".mp3")) {
-                    File file = new File(path + "/Pictures/" + id + ".jpg");
+                    File file = new File(path + "/" + id + ".jpg");
                     String albumArt = "";
                     if (!file.exists()) {
                         Log.w("soneoas", "data is " + data + " ");
@@ -358,7 +364,7 @@ public class MainActivity extends FlutterActivity {
                             Log.w("errror ", e.toString() + " iis erro " + data);
                         }
                     } else {
-                        albumArt = path + "/Pictures/" + id + ".jpg";
+                        albumArt = path + "/" + id + ".jpg";
                     }
                     Log.w("finalk", "new op " + albumArt);
 //                    String albumArt = albumMap.get(albumId) == null ? "" : albumMap.get(albumId);
@@ -376,10 +382,10 @@ public class MainActivity extends FlutterActivity {
     }
 
     private String getImageUri(Context context, Bitmap bitmap, String displayName, long id, String paths) {
-        File file = new File(paths + "/Pictures/", id + ".jpg"); // the File to save , append increasing numeric counter to prevent files from getting overwritten.
+        File file = new File(paths + "/", id + ".jpg"); // the File to save , append increasing numeric counter to prevent files from getting overwritten.
         try {
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
             out.flush();
             out.close();
             MediaStore.Images.Media.insertImage(context.getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
@@ -389,7 +395,7 @@ public class MainActivity extends FlutterActivity {
         //   ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         // inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         // Log.w("some err","path is "+path);
-        String newPath = paths + "/Pictures/" + id + ".jpg";
+        String newPath = paths + "/" + id + ".jpg";
         Log.w("asf", newPath);
         return newPath;
     }

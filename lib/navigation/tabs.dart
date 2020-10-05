@@ -23,6 +23,7 @@ class MainNav extends StatefulWidget {
 }
 
 class MainNavState extends State<MainNav> with TickerProviderStateMixin {
+  DateTime currentBackPressTime;
   TabController tabController;
   final Permission _permission = Permission.storage;
   PermissionStatus _permissionStatus = PermissionStatus.undetermined;
@@ -132,7 +133,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       mediaPlayer = new MediaPlayer();
       _animationController = AnimationController(
           vsync: this, duration: Duration(milliseconds: 300));
-      await getAllMusic();
+      // await getAllMusic();
     }
   }
 
@@ -196,104 +197,120 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     });
   }
 
+  Future<bool> onWillPop() async {
+    DateTime now = DateTime.now();
+    if (currentBackPressTime == null ||
+        now.difference(currentBackPressTime) > Duration(seconds: 2)) {
+      currentBackPressTime = now;
+      tabKey.currentState
+          .showSnackBar(SnackBar(content: Text("Press back again to exit")));
+      return Future.value(false);
+    }
+    await mediaPlayer.stopSong();
+    return Future.value(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    return Scaffold(
-        key: tabKey,
-        backgroundColor: black,
-        appBar: AppBar(
+    return WillPopScope(
+      onWillPop: onWillPop,
+      child: Scaffold(
+          key: tabKey,
           backgroundColor: black,
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.search,
-                color: orange,
-              ),
-              color: white,
-              onPressed: () async {
-                if (listfetched) {
-                  await HapticFeedback.mediumImpact().then((value) => {
-                        showSearch(
-                            context: context,
-                            delegate: SearchSong(
-                                songs: songs,
-                                playMode: playMode,
-                                playerState: playerState,
-                                playingIndex: playingIndex,
-                                playingSong: playingSong,
-                                showPlayer: showPlayer,
-                                startMusic: startMusic))
-                      });
-                }
-              },
-            ),
-            PopupMenuButton(
+          appBar: AppBar(
+            backgroundColor: black,
+            actions: [
+              IconButton(
                 icon: Icon(
-                  Icons.more_vert,
+                  Icons.search,
                   color: orange,
                 ),
-                onSelected: (val) {
-                  if (val == 1) {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => NewLoad()));
-                  } else if (val == 0) {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ScanMusic(
-                                  mediaPlayer: mediaPlayer,
-                                  callBackToScan: callBackToScan,
-                                )));
+                color: white,
+                onPressed: () async {
+                  if (listfetched) {
+                    await HapticFeedback.mediumImpact().then((value) => {
+                          showSearch(
+                              context: context,
+                              delegate: SearchSong(
+                                  songs: songs,
+                                  playMode: playMode,
+                                  playerState: playerState,
+                                  playingIndex: playingIndex,
+                                  playingSong: playingSong,
+                                  showPlayer: showPlayer,
+                                  startMusic: startMusic))
+                        });
                   }
                 },
-                color: black,
-                itemBuilder: (context) => <PopupMenuEntry<int>>[
-                      PopupMenuItem<int>(
-                        child: Text(
-                          'Scan For Songs',
-                          style: TextStyle(color: white),
+              ),
+              PopupMenuButton(
+                  icon: Icon(
+                    Icons.more_vert,
+                    color: orange,
+                  ),
+                  onSelected: (val) {
+                    if (val == 1) {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => NewLoad()));
+                    } else if (val == 0) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ScanMusic(
+                                    mediaPlayer: mediaPlayer,
+                                    callBackToScan: callBackToScan,
+                                  )));
+                    }
+                  },
+                  color: black,
+                  itemBuilder: (context) => <PopupMenuEntry<int>>[
+                        PopupMenuItem<int>(
+                          child: Text(
+                            'Scan For Songs',
+                            style: TextStyle(color: white),
+                          ),
+                          value: 0,
                         ),
-                        value: 0,
-                      ),
-                      PopupMenuItem<int>(
-                        child: Text('About', style: TextStyle(color: white)),
-                        value: 1,
-                      )
-                    ]),
-          ],
-          bottom: TabBar(
-            controller: tabController,
-            tabs: _tabs,
-            indicatorColor: orange,
-            labelColor: orange,
-            unselectedLabelColor: white,
+                        PopupMenuItem<int>(
+                          child: Text('About', style: TextStyle(color: white)),
+                          value: 1,
+                        )
+                      ]),
+            ],
+            bottom: TabBar(
+              controller: tabController,
+              tabs: _tabs,
+              indicatorColor: orange,
+              labelColor: orange,
+              unselectedLabelColor: white,
+            ),
           ),
-        ),
-        bottomNavigationBar: bottomContainer(listfetched, height, width),
-        body: TabBarView(
-          controller: tabController,
-          children: [
-            listfetched
-                ? MyHome(
-                    showPlayer: showPlayer,
-                    songs: songs,
-                    startMusic: startMusic,
-                    playingIndex: playingIndex,
-                    playingSong: playingSong,
-                    playerState: playerState,
-                    listFetched: listfetched,
-                  )
-                : Loader2(),
-            listfetched
-                ? Playlist(
-                    songs: songs,
-                    playingSong: playingSong,
-                  )
-                : Loader2(),
-          ],
-        ));
+          bottomNavigationBar: bottomContainer(listfetched, height, width),
+          body: TabBarView(
+            controller: tabController,
+            children: [
+              listfetched
+                  ? MyHome(
+                      showPlayer: showPlayer,
+                      songs: songs,
+                      startMusic: startMusic,
+                      playingIndex: playingIndex,
+                      playingSong: playingSong,
+                      playerState: playerState,
+                      listFetched: listfetched,
+                    )
+                  : Loader2(),
+              listfetched
+                  ? Playlist(
+                      songs: songs,
+                      playingSong: playingSong,
+                    )
+                  : Loader2(),
+            ],
+          )),
+    );
   }
 
   bottomContainer(bool listFetched, double height, double width) {
