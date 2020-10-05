@@ -306,13 +306,9 @@ public class MainActivity extends FlutterActivity {
     private void getAllSongs() {
         ContentResolver contentResolver = getContentResolver();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String path=null;
-        try {
-            path = getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(),0).applicationInfo.dataDir;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
+        String path =  Environment.getExternalStorageDirectory().getAbsolutePath();
         Log.w("asfasf","path is "+path);
+        path+="/android/data/com.example.music_player/files";
         Cursor cursor = contentResolver.query(uri, null, MediaStore.Audio.Media.IS_MUSIC + " = 1", null, null);
         if (cursor == null) {
             Log.w("error1", "quert failed");
@@ -382,13 +378,14 @@ public class MainActivity extends FlutterActivity {
     }
 
     private String getImageUri(Context context, Bitmap bitmap, String displayName, long id, String paths) {
-        File file = new File(paths + "/", id + ".jpg"); // the File to save , append increasing numeric counter to prevent files from getting overwritten.
+        File file = new File(paths + "/", id + ".jpg");
+        Log.w("apsfkpas","______________________________>"+file.getAbsolutePath());// the File to save , append increasing numeric counter to prevent files from getting overwritten.
         try {
             FileOutputStream out = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
             out.flush();
             out.close();
-            MediaStore.Images.Media.insertImage(context.getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
+//            MediaStore.Images.Media.insertImage(context.getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -399,214 +396,5 @@ public class MainActivity extends FlutterActivity {
         Log.w("asf", newPath);
         return newPath;
     }
-
-    private void loadAlbums() {
-        ContentResolver contentResolver = getContentResolver();
-
-        Uri uri2 = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
-        Uri uri1 = MediaStore.Audio.Albums.INTERNAL_CONTENT_URI;
-        String[] projections1 = {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART};
-        String[] projections2 = {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART};
-        Cursor cursor1 = contentResolver.query(uri1, projections1, null, null, null);
-        Cursor cursor2 = contentResolver.query(uri2, projections2, null, null, null);
-        int length = cursor1.getCount();
-        int idIndex = cursor1.getColumnIndex(BaseColumns._ID);
-        int albumIndex = cursor1.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART);
-        Log.w("tagger", "sabfkjafsaksnfkkfkfafmfA" + idIndex + " " + albumIndex);
-        for (int i = 0; i < length; i++) {
-            if (cursor1.moveToNext()) {
-                long id = cursor1.getLong(idIndex);
-                String albumPath = cursor1.getString(albumIndex) == null ? "" : cursor1.getString(albumIndex);
-                Log.w("asgag", albumPath);
-                albumMap.put(id, albumPath);
-            } else {
-                break;
-            }
-        }
-        cursor1.close();
-
-        length = cursor2.getCount();
-        idIndex = cursor2.getColumnIndex(BaseColumns._ID);
-        albumIndex = cursor2.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART);
-        Log.w("tagger", "sabfkjafsaksnfkkfkfafmfA" + idIndex + " " + albumIndex);
-        for (int i = 0; i < length; i++) {
-            if (cursor2.moveToNext()) {
-                long id = cursor2.getLong(idIndex);
-                String albumPath = cursor2.getString(albumIndex) == null ? "" : cursor2.getString(albumIndex);
-                Log.w("asgag", albumPath);
-                albumMap.put(id, albumPath);
-            } else {
-                break;
-            }
-        }
-    }
-
-//    private void scanMusicFiles(File[] files) {
-//        for (File file: files) {
-//          if (file.isDirectory())  {
-//            scanMusicFiles(file.listFiles());
-//          } else {
-//            activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://"
-//                    + file.getAbsolutePath())));
-//          }
-//        }
-//      }
-//
-//      ArrayList<HashMap> scanData() {
-//        ContentResolver content=getContentResolver();
-//        scanMusicFiles(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).listFiles());
-//        mf.prepare();
-//        List<MusicFinder.Song> allsongs = mf.getAllSongs();
-//        ArrayList<HashMap> songsMap = new ArrayList<>();
-//        for (MusicFinder.Song s : allsongs) {
-//          songsMap.add(s.toMap());
-//        }
-//        return songsMap;
-//      }
-
-    class Song {
-        long id;
-        String title;
-        String artist;
-        long artistId;
-        String data;
-        long duration;
-        String album;
-        long albumId;
-        String displayName;
-        long size;
-        String albumArt;
-        int trackId;
-
-        public Song(long id, String title, String artist, long artistId, String data, long duration, String album, long albumId, String displayName, long size, String albumArt, int trackId) {
-            this.id = id;
-            this.title = title;
-            this.artist = artist;
-            this.artistId = artistId;
-            this.data = data;
-            this.duration = duration;
-            this.album = album;
-            this.albumId = albumId;
-            this.displayName = displayName;
-            this.size = size;
-            this.albumArt = albumArt;
-            this.trackId = trackId;
-        }
-
-        public String getAlbumArt() {
-            return albumArt;
-        }
-
-        public int getTrackId() {
-            return trackId;
-        }
-
-        public void setTrackId(int trackId) {
-            this.trackId = trackId;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public String getArtist() {
-            return artist;
-        }
-
-        public void setArtist(String artist) {
-            this.artist = artist;
-        }
-
-        public long getArtistId() {
-            return artistId;
-        }
-
-        public void setArtistId(long artistId) {
-            this.artistId = artistId;
-        }
-
-        public String getData() {
-            return data;
-        }
-
-        public void setData(String data) {
-            this.data = data;
-        }
-
-        public long getDuration() {
-            return duration;
-        }
-
-        public void setDuration(long duration) {
-            this.duration = duration;
-        }
-
-        public String getAlbum() {
-            return album;
-        }
-
-        public void setAlbum(String album) {
-            this.album = album;
-        }
-
-        public long getAlbumId() {
-            return albumId;
-        }
-
-        public void setAlbumId(long albumId) {
-            this.albumId = albumId;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public void setDisplayName(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public long getSize() {
-            return size;
-        }
-
-        public void setSize(long size) {
-            this.size = size;
-        }
-
-        public void setAlbumArt(String albumArt) {
-            this.albumArt = albumArt;
-        }
-
-        HashMap<String, Object> toMap() {
-            HashMap<String, Object> songsMap = new HashMap<>();
-            songsMap.put("id", id);
-            songsMap.put("title", title);
-            songsMap.put("artist", artist);
-            songsMap.put("artistId", artistId);
-            songsMap.put("data", data);
-            songsMap.put("duration", duration);
-            songsMap.put("album", album);
-            songsMap.put("albumId", albumId);
-            songsMap.put("displayName", displayName);
-            songsMap.put("size", size);
-            songsMap.put("albumArt", albumArt);
-            songsMap.put("trackId", trackId);
-            return songsMap;
-        }
-
-    }
-
 
 }

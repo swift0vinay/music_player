@@ -100,7 +100,6 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                                 String name = this.widget.songs[i].title;
                                 String artist = this.widget.songs[i].artist;
                                 bool played = playingIndex == i ? true : false;
-                                // print(played);
                                 if (name.length > 27) {
                                   String s = '${name.substring(0, 28)}...';
                                   name = s;

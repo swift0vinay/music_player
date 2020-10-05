@@ -24,6 +24,7 @@ class MainNav extends StatefulWidget {
 
 class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   DateTime currentBackPressTime;
+  bool firstTime;
   TabController tabController;
   final Permission _permission = Permission.storage;
   PermissionStatus _permissionStatus = PermissionStatus.undetermined;
@@ -104,6 +105,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
 
   Future<void> initSp() async {
     sharedPreferences = await SharedPreferences.getInstance();
+    setState(() {
+      firstTime = sharedPreferences.getBool('firstTime') == null
+          ? false
+          : sharedPreferences.getBool('firstTime');
+    });
   }
 
   Future<void> _listenForPermissionStatus() async {
@@ -174,7 +180,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         }
       }
     });
+    if (!firstTime) {
+      await sharedPreferences.setBool('firstTime', true);
+    }
     setState(() {
+      firstTime = true;
       int ans = sharedPreferences.getInt('playMode');
       if (ans == 0) {
         playMode = PlayMode.loop;
@@ -251,10 +261,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                     color: orange,
                   ),
                   onSelected: (val) {
-                    if (val == 1) {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => NewLoad()));
-                    } else if (val == 0) {
+                    if (val == 0) {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -273,10 +280,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                           ),
                           value: 0,
                         ),
-                        PopupMenuItem<int>(
-                          child: Text('About', style: TextStyle(color: white)),
-                          value: 1,
-                        )
                       ]),
             ],
             bottom: TabBar(
@@ -407,6 +410,23 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
               ],
             ),
           ));
+    } else if (firstTime != null && !firstTime) {
+      return Container(
+        height: height * 0.08,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text(
+              "Building Thumbnails..",
+              style: TextStyle(color: white),
+            ),
+            Text(
+              "it may take upto 1 to 2 minutes",
+              style: TextStyle(color: white),
+            ),
+          ],
+        ),
+      );
     } else {
       return Container(
         height: height * 0.08,
