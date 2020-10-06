@@ -1,15 +1,11 @@
 package com.example.music_player;
 
-import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.AudioAttributes;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -17,22 +13,17 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import java.io.FileOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
@@ -49,7 +40,7 @@ public class MainActivity extends FlutterActivity {
 
     static void showNotification(String title, String author, boolean play, Context context ) {
 
-        Intent serviceIntent = new Intent(context, NotificationPanel.class);
+        Intent serviceIntent = new Intent(context, NotificationMaker.class);
         serviceIntent.putExtra("title", title);
         serviceIntent.putExtra("author", author);
         serviceIntent.putExtra("isPlaying", play);
@@ -57,7 +48,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     static private void hideNotification(Context context) {
-        Intent serviceIntent = new Intent(context, NotificationPanel.class);
+        Intent serviceIntent = new Intent(context, NotificationMaker.class);
         context.stopService(serviceIntent);
     }
 

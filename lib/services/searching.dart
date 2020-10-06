@@ -2,11 +2,11 @@ import 'dart:collection';
 
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/material.dart';
-import 'package:music_player/MediaPlayer.dart';
+import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/constants.dart';
-import 'package:music_player/detailsPage.dart';
-import 'package:music_player/loader.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/screens/detailsPage.dart';
+import 'package:music_player/screens/loader.dart';
+import 'package:music_player/services/songModel.dart';
 
 class SearchSong extends SearchDelegate<Song> {
   List<Song> songs;

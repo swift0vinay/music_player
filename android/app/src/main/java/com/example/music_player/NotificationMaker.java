@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -16,10 +15,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
 
 
-public class NotificationPanel extends Service {
+public class NotificationMaker extends Service {
     public static int NOTIFICATION_ID = 1;
     public  static final String CHANNEL_ID = "notification";
-    public  static final String MEDIA_SESSION_TAG = "flutter_media_notification";
+    public  static final String MEDIA_SESSION_TAG = "media_player";
 
     @Override
     public void onCreate() {
@@ -45,7 +44,7 @@ public class NotificationPanel extends Service {
             titlePlayPause="play";
         }
 
-        Intent toggleIntent = new Intent(this, NotificationReturnSlot.class)
+        Intent toggleIntent = new Intent(this, NotificationHeader.class)
                 .setAction("toggle")
                 .putExtra("title",  title)
                 .putExtra("author",  author)
@@ -54,17 +53,17 @@ public class NotificationPanel extends Service {
         MediaButtonReceiver.handleIntent(mediaSession, toggleIntent);
 
         //TODO(ALI): add media mediaSession Buttons and handle them
-        Intent nextIntent = new Intent(this, NotificationReturnSlot.class)
+        Intent nextIntent = new Intent(this, NotificationHeader.class)
                 .setAction("next");
         PendingIntent pendingNextIntent = PendingIntent.getBroadcast(this, 0, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 //        MediaButtonReceiver.handleIntent(mediaSession, nextIntent);
 
-        Intent prevIntent = new Intent(this, NotificationReturnSlot.class)
+        Intent prevIntent = new Intent(this, NotificationHeader.class)
                 .setAction("prev");
         PendingIntent pendingPrevIntent = PendingIntent.getBroadcast(this, 0, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 //        MediaButtonReceiver.handleIntent(mediaSession, prevIntent);
 
-        Intent selectIntent = new Intent(this, NotificationReturnSlot.class)
+        Intent selectIntent = new Intent(this, NotificationHeader.class)
                 .setAction("select");
         PendingIntent selectPendingIntent = PendingIntent.getBroadcast(this, 0, selectIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 //        MediaButtonReceiver.handleIntent(mediaSession, selectIntent);
@@ -111,10 +110,10 @@ public class NotificationPanel extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_LOW
+                    "Music Player",
+                    NotificationManager.IMPORTANCE_HIGH
             );
-            serviceChannel.setDescription("flutter_media_notification");
+            serviceChannel.setDescription("media_player");
             serviceChannel.setShowBadge(false);
             serviceChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 

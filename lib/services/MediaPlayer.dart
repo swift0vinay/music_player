@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/services/songModel.dart';
 
-import 'constants.dart';
+import '../constants.dart';
 
 typedef void TimeChangeHandler(Duration duration);
 typedef void ErrorHandler(String message);

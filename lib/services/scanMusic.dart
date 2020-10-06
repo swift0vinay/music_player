@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:music_player/MediaPlayer.dart';
+import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/constants.dart';
-import 'package:music_player/loader.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/screens/loader.dart';
+import 'package:music_player/services/songModel.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
 class ScanMusic extends StatefulWidget {

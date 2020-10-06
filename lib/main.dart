@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/navigation/homePage.dart';
-import 'package:music_player/loader.dart';
+import 'package:music_player/screens/loader.dart';
 import 'package:music_player/navigation/tabs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

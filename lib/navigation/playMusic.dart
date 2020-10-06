@@ -2,11 +2,11 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:music_player/MediaPlayer.dart';
-import 'package:music_player/previewLogo.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/services/MediaPlayer.dart';
+import 'package:music_player/screens/previewLogo.dart';
+import 'package:music_player/services/songModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:music_player/notification.dart';
+import 'package:music_player/services/notification.dart';
 import '../constants.dart';
 
 class PlayMusic extends StatefulWidget {

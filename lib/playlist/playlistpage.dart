@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/playlist/showFavs.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/services/songModel.dart';
 
 class Playlist extends StatefulWidget {
   List<Song> songs;

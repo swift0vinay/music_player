@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
-public class NotificationReturnSlot extends BroadcastReceiver {
+public class NotificationHeader extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:music_player/detailsPage.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/screens/detailsPage.dart';
+import 'package:music_player/services/songModel.dart';
 import 'package:share/share.dart';
 
 Color orange = Colors.red;

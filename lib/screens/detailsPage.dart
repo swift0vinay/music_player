@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
-import 'package:music_player/previewLogo.dart';
-import 'package:music_player/songModel.dart';
+import 'package:music_player/screens/previewLogo.dart';
+import 'package:music_player/services/songModel.dart';
 
 class DetailsPage extends StatefulWidget {
   Song song;
