@@ -9,7 +9,8 @@ import 'package:progress_dialog/progress_dialog.dart';
 class ScanMusic extends StatefulWidget {
   MediaPlayer mediaPlayer;
   Function callBackToScan;
-  ScanMusic({this.mediaPlayer, this.callBackToScan});
+  Function callBackToRefresh;
+  ScanMusic({this.mediaPlayer, this.callBackToRefresh, this.callBackToScan});
   @override
   _ScanMusicState createState() => _ScanMusicState();
 }
@@ -69,6 +70,7 @@ class _ScanMusicState extends State<ScanMusic> {
                 this.widget.callBackToScan();
                 await pr.show();
                 songs = await this.widget.mediaPlayer.getMusic();
+                // this.widget.callBackToRefresh(songs);
                 await pr.hide();
                 setState(() {
                   scan = true;

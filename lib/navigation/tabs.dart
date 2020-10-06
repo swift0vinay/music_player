@@ -24,7 +24,7 @@ class MainNav extends StatefulWidget {
 
 class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   DateTime currentBackPressTime;
-  bool firstTime;
+  bool firstTime = true;
   TabController tabController;
   final Permission _permission = Permission.storage;
   PermissionStatus _permissionStatus = PermissionStatus.undetermined;
@@ -220,6 +220,36 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     return Future.value(true);
   }
 
+  callBackToRefresh(List<Song> list) {
+    list.sort((a, b) {
+      if ((a.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
+              a.title[0].codeUnitAt(0) <= ('z'.codeUnitAt(0))) ||
+          (a.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0)) &&
+              a.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0)))) {
+        if ((b.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
+                b.title[0].codeUnitAt(0) <= 'z'.codeUnitAt(0)) ||
+            (b.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0))) &&
+                b.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0))) {
+          return a.title.compareTo(b.title);
+        } else {
+          return -1;
+        }
+      } else {
+        if ((b.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&
+                b.title[0].codeUnitAt(0) <= ('z'.codeUnitAt(0))) ||
+            (b.title[0].codeUnitAt(0) >= ('A'.codeUnitAt(0)) &&
+                b.title[0].codeUnitAt(0) <= ('Z'.codeUnitAt(0)))) {
+          return 1;
+        } else {
+          return a.title.compareTo(b.title);
+        }
+      }
+    });
+    setState(() {
+      songs = list;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
@@ -267,6 +297,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                           MaterialPageRoute(
                               builder: (context) => ScanMusic(
                                     mediaPlayer: mediaPlayer,
+                                    callBackToRefresh: callBackToRefresh,
                                     callBackToScan: callBackToScan,
                                   )));
                     }
