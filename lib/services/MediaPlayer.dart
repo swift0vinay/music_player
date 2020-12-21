@@ -26,6 +26,15 @@ class MediaPlayer {
     }
   }
 
+  Future<List<Song>> getMusicFromBox() async {
+    List<Song> songs = new List();
+    int length = musicBox.length;
+    for (int i = 0; i < length; i++) {
+      songs.add(Song.fromMap(Map.from(musicBox.get(i))));
+    }
+    return songs;
+  }
+
   Future<List<Song>> getMusic() async {
     try {
       List<Song> songs = new List();
@@ -34,6 +43,7 @@ class MediaPlayer {
       await myChannel.invokeMethod('getMusic').then((value) {
         Map<String, dynamic> rs = Map.from(value);
         rs.forEach((key, value) {
+          musicBox.add(Map.from(value));
           Song song = Song.fromMap(Map.from(value));
           songs.add(song);
         });

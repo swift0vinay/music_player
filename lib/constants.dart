@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:music_player/screens/detailsPage.dart';
 import 'package:music_player/services/songModel.dart';
 import 'package:share/share.dart';
 
+String boxName = 'music_player';
+Box musicBox;
 Color orange = Colors.red;
 Color white = Colors.white;
 Color black = Colors.black;
@@ -33,6 +36,7 @@ myBottomSheet(BuildContext context, Song song) {
   int dur = song.duration;
   String min = (dur / 60).toStringAsFixed(0);
   double width = MediaQuery.of(context).size.width;
+
   return showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(

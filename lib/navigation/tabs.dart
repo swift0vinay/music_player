@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/navigation/homePage.dart';
 import 'package:music_player/screens/loader.dart';
@@ -13,6 +14,7 @@ import 'package:music_player/screens/previewLogo.dart';
 import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/services/searching.dart';
 import 'package:music_player/services/songModel.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
@@ -97,6 +99,10 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   }
 
   Future<void> preparePage() async {
+    Directory directory = await getApplicationDocumentsDirectory();
+    Hive.init(directory.path);
+    musicBox = await Hive.openBox(boxName);
+
     await initSp();
     await _listenForPermissionStatus();
     await getPermission();
@@ -154,7 +160,11 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   }
 
   Future<void> getAllMusic() async {
-    songs = await mediaPlayer.getMusic();
+    if (musicBox.isEmpty) {
+      songs = await mediaPlayer.getMusic();
+    } else {
+      songs = await mediaPlayer.getMusicFromBox();
+    }
     await getFavList();
     songs.sort((a, b) {
       if ((a.title[0].codeUnitAt(0) >= ('a'.codeUnitAt(0)) &&

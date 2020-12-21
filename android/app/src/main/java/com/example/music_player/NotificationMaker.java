@@ -111,7 +111,7 @@ public class NotificationMaker extends Service {
             NotificationChannel serviceChannel = new NotificationChannel(
                     CHANNEL_ID,
                     "Music Player",
-                    NotificationManager.IMPORTANCE_HIGH
+                    NotificationManager.IMPORTANCE_DEFAULT
             );
             serviceChannel.setDescription("media_player");
             serviceChannel.setShowBadge(false);
