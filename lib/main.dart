@@ -16,12 +16,13 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        systemNavigationBarColor: black,
-        statusBarColor: black,
-        systemNavigationBarIconBrightness: Brightness.light
-        // navigation bar color
-        ));
+      systemNavigationBarColor: black,
+      statusBarColor: black,
+      systemNavigationBarIconBrightness: Brightness.light,
+      // navigation bar color
+    ));
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(accentColor: orange, primaryColor: black),

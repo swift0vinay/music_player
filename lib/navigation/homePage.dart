@@ -5,6 +5,7 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
+import 'package:music_player/screens/bottomSheet.dart';
 import 'package:music_player/screens/detailsPage.dart';
 import 'package:flutter/services.dart';
 import 'package:music_player/services/MediaPlayer.dart';
@@ -87,36 +88,31 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           style: TextStyle(color: white),
                         ))
                       : Expanded(
-                          child: DraggableScrollbar.semicircle(
-                            labelConstraints: BoxConstraints.tightFor(
-                                width: 80.0, height: 30.0),
+                          child: ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 15.0),
+                            shrinkWrap: true,
                             controller: scrollController,
-                            child: ListView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 15.0),
-                              shrinkWrap: true,
-                              controller: scrollController,
-                              itemCount: this.widget.songs.length,
-                              itemBuilder: (context, i) {
-                                String name = this.widget.songs[i].title;
-                                String artist = this.widget.songs[i].artist;
-                                bool played = playingIndex == i ? true : false;
-                                if (name.length > 27) {
-                                  String s = '${name.substring(0, 28)}...';
-                                  name = s;
-                                }
-                                if (artist.length > 30) {
-                                  String s = '${artist.substring(0, 31)}...';
-                                  artist = s;
-                                }
-                                return musicTile(
-                                  played,
-                                  i,
-                                  name,
-                                  artist,
-                                  context,
-                                );
-                              },
-                            ),
+                            itemCount: this.widget.songs.length,
+                            itemBuilder: (context, i) {
+                              String name = this.widget.songs[i].title;
+                              String artist = this.widget.songs[i].artist;
+                              bool played = playingIndex == i ? true : false;
+                              if (name.length > 27) {
+                                String s = '${name.substring(0, 28)}...';
+                                name = s;
+                              }
+                              if (artist.length > 30) {
+                                String s = '${artist.substring(0, 31)}...';
+                                artist = s;
+                              }
+                              return musicTile(
+                                played,
+                                i,
+                                name,
+                                artist,
+                                context,
+                              );
+                            },
                           ),
                         ),
                 ],

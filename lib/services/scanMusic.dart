@@ -67,8 +67,10 @@ class _ScanMusicState extends State<ScanMusic> {
             RaisedButton(
               onPressed: () async {
                 await this.widget.mediaPlayer.stopSong();
+                await musicBox.clear();
                 this.widget.callBackToScan();
                 await pr.show();
+                // songs.clear();
                 songs = await this.widget.mediaPlayer.getMusic();
                 // this.widget.callBackToRefresh(songs);
                 await pr.hide();
@@ -76,6 +78,9 @@ class _ScanMusicState extends State<ScanMusic> {
                   scan = true;
                 });
               },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0),
+              ),
               color: orange,
               child: Text(
                 'Run Scan',

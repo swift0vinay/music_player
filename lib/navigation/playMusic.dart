@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:music_player/screens/bottomSheet.dart';
 import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/screens/previewLogo.dart';
 import 'package:music_player/services/songModel.dart';
@@ -308,12 +309,12 @@ class _PlayMusicState extends State<PlayMusic>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${pos[1]} : ${pos[2].substring(0, pos[2].lastIndexOf('.'))}',
-                      style: TextStyle(color: orange),
+                      '${pos[1]}:${pos[2].substring(0, pos[2].lastIndexOf('.'))}',
+                      style: TextStyle(color: orange, letterSpacing: 1),
                     ),
                     Text(
-                      '${dur[1]} : ${dur[2].substring(0, dur[2].lastIndexOf('.'))}',
-                      style: TextStyle(color: white),
+                      '${dur[1]}:${dur[2].substring(0, dur[2].lastIndexOf('.'))}',
+                      style: TextStyle(color: white, letterSpacing: 1),
                     ),
                   ],
                 ),

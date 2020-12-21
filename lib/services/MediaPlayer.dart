@@ -39,7 +39,6 @@ class MediaPlayer {
     try {
       List<Song> songs = new List();
       // await Future.delayed(Duration(seconds: 3));
-
       await myChannel.invokeMethod('getMusic').then((value) {
         Map<String, dynamic> rs = Map.from(value);
         rs.forEach((key, value) {

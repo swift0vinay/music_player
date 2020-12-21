@@ -1,7 +1,6 @@
 # music_player
 
-A new Flutter project.
-
+Music Player built using- Flutter, Dart, Android, Hive.
 ## Getting Started
 
 This project is a starting point for a Flutter application.
