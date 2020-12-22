@@ -11,7 +11,11 @@ myBottomSheet(BuildContext context, Song song) {
   int dur = song.duration;
   String min = (dur / 60).toStringAsFixed(0);
   double width = MediaQuery.of(context).size.width;
-
+  TextStyle labelStyle = TextStyle(
+    fontSize: 15.0,
+    color: white,
+    letterSpacing: 1,
+  );
   return showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -40,7 +44,7 @@ myBottomSheet(BuildContext context, Song song) {
                         child: Center(
                           child: Text(
                             "Send Song",
-                            style: TextStyle(fontSize: 18.0, color: white),
+                            style: labelStyle,
                           ),
                         ))),
                 InkWell(
@@ -60,7 +64,7 @@ myBottomSheet(BuildContext context, Song song) {
                         child: Center(
                           child: Text(
                             "Details",
-                            style: TextStyle(fontSize: 18.0, color: white),
+                            style: labelStyle,
                           ),
                         ))),
                 SizedBox(
@@ -81,7 +85,7 @@ myBottomSheet(BuildContext context, Song song) {
                         child: Center(
                           child: Text(
                             "Cancel",
-                            style: TextStyle(fontSize: 18.0, color: white),
+                            style: labelStyle,
                           ),
                         ))),
               ],

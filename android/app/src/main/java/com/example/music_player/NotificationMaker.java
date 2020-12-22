@@ -6,10 +6,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
@@ -17,8 +20,8 @@ import androidx.media.session.MediaButtonReceiver;
 
 public class NotificationMaker extends Service {
     public static int NOTIFICATION_ID = 1;
-    public  static final String CHANNEL_ID = "notification";
-    public  static final String MEDIA_SESSION_TAG = "media_player";
+    public static final String CHANNEL_ID = "notification";
+    public static final String MEDIA_SESSION_TAG = "media_player";
 
     @Override
     public void onCreate() {
@@ -30,24 +33,26 @@ public class NotificationMaker extends Service {
         boolean isPlaying = intent.getBooleanExtra("isPlaying", true);
         String title = intent.getStringExtra("title");
         String author = intent.getStringExtra("author");
-
+        String imagePath = intent.getStringExtra("imagePath");
         createNotificationChannel();
 
+        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
 
         MediaSessionCompat mediaSession = new MediaSessionCompat(this, MEDIA_SESSION_TAG);
 
 
-        int iconPlayPause =R.drawable.baseline_play_arrow_black_48;
+        int iconPlayPause = R.drawable.baseline_play_arrow_black_48;
         String titlePlayPause = "pause";
-        if(isPlaying){
-            iconPlayPause=R.drawable.baseline_pause_black_48;
-            titlePlayPause="play";
+        if (isPlaying) {
+            iconPlayPause = R.drawable.baseline_pause_black_48;
+            titlePlayPause = "play";
         }
 
         Intent toggleIntent = new Intent(this, NotificationHeader.class)
                 .setAction("toggle")
-                .putExtra("title",  title)
-                .putExtra("author",  author)
+                .putExtra("title", title)
+                .putExtra("author", author)
+                .putExtra("imagePath", imagePath)
                 .putExtra("play", !isPlaying);
         PendingIntent pendingToggleIntent = PendingIntent.getBroadcast(this, 0, toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         MediaButtonReceiver.handleIntent(mediaSession, toggleIntent);
@@ -62,33 +67,38 @@ public class NotificationMaker extends Service {
                 .setAction("prev");
         PendingIntent pendingPrevIntent = PendingIntent.getBroadcast(this, 0, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 //        MediaButtonReceiver.handleIntent(mediaSession, prevIntent);
-
+//        Log.w("asf",imagePath);
+        System.out.println("<_______________________>" + imagePath);
         Intent selectIntent = new Intent(this, NotificationHeader.class)
                 .setAction("select");
         PendingIntent selectPendingIntent = PendingIntent.getBroadcast(this, 0, selectIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 //        MediaButtonReceiver.handleIntent(mediaSession, selectIntent);
-
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+
                 .addAction(R.drawable.baseline_skip_previous_black_48, "prev", pendingPrevIntent)
                 .addAction(iconPlayPause, titlePlayPause, pendingToggleIntent)
                 .addAction(R.drawable.baseline_skip_next_black_48, "next", pendingNextIntent)
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1,2)
-                        .setShowCancelButton(true)
-                        .setMediaSession(mediaSession.getSessionToken()))
+                .setStyle(
+                        new androidx.media.app.NotificationCompat.MediaStyle()
+                                .setShowActionsInCompactView(0, 1, 2)
+                                .setShowCancelButton(true)
+                                .setMediaSession(mediaSession.getSessionToken()))
+                .setLargeIcon(bitmap)
+//                .setStyle(new NotificationCompat.BigPictureStyle().bigLargeIcon(bitmap))
                 .setSmallIcon(R.drawable.ic_stat_music_note)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setVibrate(new long[]{0L})
-                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentTitle(title)
                 .setContentText(author)
                 .setSubText(title)
                 .setContentIntent(selectPendingIntent)
-                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.ic_stat_music_note))
+
+//                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.ic_stat_music_note))
                 .build();
 
         startForeground(NOTIFICATION_ID, notification);
-        if(!isPlaying) {
+        if (!isPlaying) {
             stopForeground(false);
         }
 

@@ -38,12 +38,14 @@ public class MainActivity extends FlutterActivity {
     static private MethodChannel channel;
     static private MethodChannel notificationChannel;
 
-    static void showNotification(String title, String author, boolean play, Context context ) {
+    static void showNotification(String title, String author,String imagePath,boolean play, Context context ) {
 
         Intent serviceIntent = new Intent(context, NotificationMaker.class);
         serviceIntent.putExtra("title", title);
         serviceIntent.putExtra("author", author);
         serviceIntent.putExtra("isPlaying", play);
+        serviceIntent.putExtra("imagePath",imagePath);
+        Log.w("log2",")))))))))))"+imagePath);
         context.startService(serviceIntent);
     }
 
@@ -84,8 +86,10 @@ public class MainActivity extends FlutterActivity {
                         if (call.method.equals("showNotification")) {
                             String title = call.argument("title");
                             String artist = call.argument("artist");
+                            String imagePath=call.argument("imagePath");
+                            Log.w("log1","((((((((((((((((((((((((((((((("+imagePath);
                             boolean isPlaying = call.argument("isPlaying");
-                            showNotification(title, artist, isPlaying,context);
+                            showNotification(title, artist,imagePath, isPlaying,context);
                             result.success(null);
                         } else if (call.method.equals("hideNotification")) {
                             hideNotification(context);

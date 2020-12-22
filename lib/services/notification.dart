@@ -12,14 +12,15 @@ class MyNotification {
   }
 
   static Future showNotification(
-      String artist, String title, bool isPlaying) async {
+      String artist, String title, String musicPath, bool isPlaying) async {
     try {
       final Map<String, dynamic> map = <String, dynamic>{
         'title': title,
         'artist': artist,
         'isPlaying': isPlaying,
+        'imagePath': musicPath,
       };
-      print('here');
+      print('here $map');
       await methodChannel.invokeMethod('showNotification', map).then((value) {
         print('doneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
         methodChannel.setMethodCallHandler(_utilsHandler);

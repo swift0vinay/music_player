@@ -19,6 +19,7 @@ public class NotificationHeader extends BroadcastReceiver {
             case "toggle":
                 String title = intent.getStringExtra("title");
                 String author = intent.getStringExtra("author");
+                String imagePath=intent.getStringExtra("imagePath");
                 boolean play = intent.getBooleanExtra("play",true);
 
                 if(play)
@@ -26,7 +27,7 @@ public class NotificationHeader extends BroadcastReceiver {
                 else
                     MainActivity.callEvent("pause");
 
-                MainActivity.showNotification(title, author,play,context);
+                MainActivity.showNotification(title, author,imagePath,play,context);
                 break;
             case "select":
                 Intent closeDialog = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);

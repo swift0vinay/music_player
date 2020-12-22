@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:music_player/screens/bottomSheet.dart';
 import 'package:music_player/services/MediaPlayer.dart';
@@ -19,37 +17,35 @@ class PlayMusic extends StatefulWidget {
   Duration duration;
   Duration position;
   int index;
-  // Function callBackToUpdateSong;
-  // Function callBackToState;
-  // Function callBackToPosition;
-  // Function callBackToStart;
-  // Function callBackToMode;
-  // Function randomSong;
-  // Function callBackToDuration;
+  Function savePlayMode;
   Function nextSong;
   Function prevSong;
   List<Song> songs;
-  PlayMusic(
-      {this.duration,
-      this.prevSong,
-      this.index,
-      this.songs,
-      this.start,
-      this.nextSong,
-      this.playMode,
-      this.position,
-      this.playerState,
-      this.song,
-      this.mediaPlayer});
+  PlayMusic({
+    this.duration,
+    this.prevSong,
+    this.index,
+    this.songs,
+    this.start,
+    this.nextSong,
+    this.playMode,
+    this.position,
+    this.playerState,
+    this.song,
+    this.mediaPlayer,
+    this.savePlayMode,
+  });
+
   @override
   _PlayMusicState createState() => _PlayMusicState(
-      playMode: playMode,
-      playerState: playerState,
-      start: start,
-      playingIndex: index,
-      playingSong: song,
-      position: position,
-      duration: duration);
+        playMode: playMode,
+        playerState: playerState,
+        start: start,
+        playingIndex: index,
+        playingSong: song,
+        position: position,
+        duration: duration,
+      );
 }
 
 class _PlayMusicState extends State<PlayMusic>
@@ -61,14 +57,15 @@ class _PlayMusicState extends State<PlayMusic>
   Duration position;
   int playingIndex;
   bool start;
-  _PlayMusicState(
-      {this.duration,
-      this.position,
-      this.start,
-      this.playingSong,
-      this.playerState,
-      this.playMode,
-      this.playingIndex});
+  _PlayMusicState({
+    this.duration,
+    this.position,
+    this.start,
+    this.playingSong,
+    this.playerState,
+    this.playMode,
+    this.playingIndex,
+  });
   bool play = true;
   bool onScreen;
   bool faved = false;
@@ -76,7 +73,6 @@ class _PlayMusicState extends State<PlayMusic>
   AnimationController animationController;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     initSp();
     playingSong = this.widget.song;
@@ -88,17 +84,14 @@ class _PlayMusicState extends State<PlayMusic>
     onScreen = true;
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
-    // print(this.widget.mediaPlayer);
     MyNotification.setListeners('play', () {
       resume(true);
     });
     MyNotification.setListeners('pause', () async {
-      // await MyNotification.hideNotification();
       pause(true);
     });
     MyNotification.setListeners('next', () {
       int newi = this.widget.nextSong(playingIndex, false, playMode);
-      print('-------------------------------------->> $newi');
       startPlayer(this.widget.songs[newi], newi);
     });
     MyNotification.setListeners('prev', () {
@@ -121,8 +114,6 @@ class _PlayMusicState extends State<PlayMusic>
   @override
   void dispose() {
     super.dispose();
-    print(
-        'dosopose calllled//////////////////////////////////////////////////');
     onScreen = false;
     animationController.dispose();
   }
@@ -139,7 +130,6 @@ class _PlayMusicState extends State<PlayMusic>
       String s = '${artist.substring(0, 30)}...';
       artist = s;
     }
-    // print(duration);
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     List<String> dur = duration.toString().split(':');
@@ -155,7 +145,7 @@ class _PlayMusicState extends State<PlayMusic>
           position,
           playerState,
           playMode,
-          start
+          start,
         ];
         Navigator.pop(context, list);
         return true;
@@ -177,7 +167,7 @@ class _PlayMusicState extends State<PlayMusic>
               position,
               playerState,
               playMode,
-              start
+              start,
             ];
             Navigator.pop(context, list);
           }
@@ -376,9 +366,11 @@ class _PlayMusicState extends State<PlayMusic>
                           pause(false);
                         } else {
                           await MyNotification.showNotification(
-                              this.widget.song.artist,
-                              this.widget.song.title,
-                              true);
+                            this.widget.song.artist,
+                            this.widget.song.title,
+                            this.widget.song.albumArt,
+                            true,
+                          );
                           resume(false);
                         }
                       },
@@ -442,10 +434,13 @@ class _PlayMusicState extends State<PlayMusic>
                       playMode == PlayMode.loop
                           ? IconButton(
                               icon: Icon(Icons.repeat),
-                              onPressed: () {
+                              onPressed: () async {
                                 setState(() {
                                   playMode = PlayMode.repeat;
+                                  shuffleList.clear();
                                 });
+                                await this.widget.savePlayMode(playMode);
+
                                 // this.widget.callBackToMode(playMode);
                               },
                               color: white.withOpacity(0.5),
@@ -453,20 +448,25 @@ class _PlayMusicState extends State<PlayMusic>
                           : playMode == PlayMode.repeat
                               ? IconButton(
                                   icon: Icon(Icons.repeat_one),
-                                  onPressed: () {
+                                  onPressed: () async {
                                     setState(() {
                                       playMode = PlayMode.shuffle;
+                                      shuffleList.add(playingIndex);
                                     });
+                                    await this.widget.savePlayMode(playMode);
+
                                     // this.widget.callBackToMode(playMode);
                                   },
                                   color: white.withOpacity(0.5),
                                 )
                               : IconButton(
                                   icon: Icon(Icons.shuffle),
-                                  onPressed: () {
+                                  onPressed: () async {
                                     setState(() {
                                       playMode = PlayMode.loop;
+                                      shuffleList.clear();
                                     });
+                                    await this.widget.savePlayMode(playMode);
                                     // this.widget.callBackToMode(playMode);
                                   },
                                   color: white.withOpacity(0.5),
@@ -511,8 +511,12 @@ class _PlayMusicState extends State<PlayMusic>
         }
       });
       bool isPlaying = playerState == PlayerState.paused ? false : true;
-      await MyNotification.showNotification(song.artist, song.title, isPlaying)
-          .then((value) {
+      await MyNotification.showNotification(
+        song.artist,
+        song.title,
+        song.albumArt,
+        isPlaying,
+      ).then((value) {
         print('notification started');
       }).catchError((e) {
         print('notifiaciotn errroroo');

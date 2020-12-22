@@ -38,6 +38,7 @@ getHeight(BuildContext context, Orientation orientation) {
   // }
 }
 
+List<int> shuffleList = new List();
 List<String> favs = new List();
 // pr.style(
 //   message: 'Downloading file...',

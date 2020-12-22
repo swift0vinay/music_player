@@ -57,6 +57,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     tabController = new TabController(length: 2, vsync: this, initialIndex: 0);
+    shuffleList = List();
     setState(() {
       listfetched = false;
       playerState = PlayerState.stopped;
@@ -213,6 +214,9 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
         playingSong = songs[playingIndex];
         print(playingSong.displayName);
       }
+      if (playMode == PlayMode.shuffle) {
+        shuffleList.add(playingIndex);
+      }
       listfetched = true;
     });
   }
@@ -222,8 +226,20 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     if (currentBackPressTime == null ||
         now.difference(currentBackPressTime) > Duration(seconds: 2)) {
       currentBackPressTime = now;
-      tabKey.currentState
-          .showSnackBar(SnackBar(content: Text("Press back again to exit")));
+      tabKey.currentState.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Press back again to exit",
+            style: TextStyle(
+              letterSpacing: 1.0,
+            ),
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+        ),
+      );
       return Future.value(false);
     }
     await mediaPlayer.stopSong();
@@ -264,6 +280,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    print(shuffleList);
     return WillPopScope(
       onWillPop: onWillPop,
       child: Scaffold(
@@ -432,8 +449,13 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                         await MyNotification.hideNotification();
                         pause();
                       } else {
+                        print("==========================${playingSong.albumArt}");
                         await MyNotification.showNotification(
-                            playingSong.artist, playingSong.title, true);
+                          playingSong.artist,
+                          playingSong.title,
+                          playingSong.albumArt,
+                          true,
+                        );
                         resume();
                       }
                     },
@@ -547,6 +569,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             index: playingIndex,
             song: playingSong,
             playerState: playerState,
+            savePlayMode: savePlayMode,
           );
         });
 
@@ -607,8 +630,13 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     if (rs == 1) {
       playerState = PlayerState.playing;
       bool isPlaying = playerState == PlayerState.paused ? false : true;
-      await MyNotification.showNotification(song.artist, song.title, isPlaying)
-          .then((value) {
+       print("==========================${song.albumArt}");
+      await MyNotification.showNotification(
+        song.artist,
+        song.title,
+        song.albumArt,
+        isPlaying,
+      ).then((value) {
         print('notification started');
       }).catchError((e) {
         print('notifiaciotn errroroo');
@@ -647,29 +675,28 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
           'playingIndex is $playingIndex playing song is ${playingSong.displayName}');
       await startPlayer(songs[playingIndex], playingIndex);
     });
-    mediaPlayer
-      ..setErrorHandler((msg) {
-        setState(() {
-          print('msg is $msg');
-          playerState = PlayerState.stopped;
-          duration = new Duration(seconds: 0);
-          position = new Duration(seconds: 0);
-        });
+    mediaPlayer.setErrorHandler((msg) {
+      setState(() {
+        print('msg is $msg');
+        playerState = PlayerState.stopped;
+        duration = new Duration(seconds: 0);
+        position = new Duration(seconds: 0);
       });
+    });
   }
 
-  int randomSong() {
-    Random random = new Random();
-    int newi = random.nextInt(songs.length);
-    setState(() {
-      if (start) {
-        start = false;
-      }
-      playingIndex = newi;
-      playingSong = songs[newi];
-    });
-    return newi;
-  }
+  // int randomSong() {
+  //   Random random = new Random();
+  //   int newi = random.nextInt(songs.length);
+  //   setState(() {
+  //     if (start) {
+  //       start = false;
+  //     }
+  //     playingIndex = newi;
+  //     playingSong = songs[newi];
+  //   });
+  //   return newi;
+  // }
 
   int nextSong(int i, bool fromCompletion, PlayMode pm) {
     int newi;
@@ -683,6 +710,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     } else {
       Random random = new Random();
       newi = random.nextInt(songs.length);
+      shuffleList.add(newi);
     }
     setState(() {
       if (start) {
@@ -701,8 +729,13 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     if (playMode != PlayMode.shuffle) {
       newi = (i - 1) % songs.length;
     } else {
-      Random random = new Random();
-      newi = random.nextInt(songs.length);
+      if (shuffleList.isEmpty) {
+        Random random = new Random();
+        newi = random.nextInt(songs.length);
+      } else {
+        newi = shuffleList.last;
+        shuffleList.removeLast();
+      }
     }
     setState(() {
       if (start) {
@@ -714,7 +747,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     return newi;
   }
 
-  savePlayMode(PlayMode pM) async {
+  Future<void> savePlayMode(PlayMode pM) async {
     int ans;
     if (pM == PlayMode.loop) {
       ans = 0;
@@ -724,5 +757,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       ans = 2;
     }
     await sharedPreferences.setInt('playMode', ans);
+    setState(() {
+      playMode = pM;
+    });
   }
 }
