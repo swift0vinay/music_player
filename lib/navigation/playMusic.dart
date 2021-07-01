@@ -74,6 +74,7 @@ class _PlayMusicState extends State<PlayMusic>
   @override
   void initState() {
     super.initState();
+    execution();
     initSp();
     playingSong = this.widget.song;
     playingIndex = this.widget.index;
@@ -118,6 +119,64 @@ class _PlayMusicState extends State<PlayMusic>
     animationController.dispose();
   }
 
+  Map<String, String> lyricsMap = {};
+  List<String> lyricsKey = [];
+  int lyricIndex = 0;
+  bool lyricFound = false;
+  void execution() {
+    String songName = playingSong.displayName;
+    String fileDirectory =
+        playingSong.data.substring(0, playingSong.data.lastIndexOf('.'));
+    String lrcName = '$fileDirectory.lrc';
+    File file = new File(lrcName);
+    if (file.existsSync()) {
+      lyricFound = true;
+      String z = file.readAsStringSync();
+      int open = -1, end = -1;
+      for (int i = 0; i < z.length; i++) {
+        if (z[i] == "[") {
+          open = i;
+        } else if (z[i] == "]") {
+          end = i;
+          String time = z.substring(open + 1, end);
+          String content = "";
+          for (int j = i + 1; j < z.length; j++) {
+            if (z[j] == "[") {
+              i = j - 1;
+              break;
+            }
+            content += z[j];
+          }
+          if (content.trim().length > 0)
+            lyricsMap.putIfAbsent(time, () => content);
+        }
+      }
+      lyricsKey = lyricsMap.keys.toList();
+    } else {
+      lyricText = "No Lyrics Found";
+    }
+  }
+
+  String lyricText = "";
+  process(Duration position) {
+    if (lyricFound) {
+      String z = position.toString();
+      int first = z.indexOf(":");
+      String zz = z.substring(first + 1);
+      while (lyricIndex + 1 < lyricsKey.length) {
+        if (zz.compareTo(lyricsKey[lyricIndex]) >= 0 &&
+            zz.compareTo(lyricsKey[lyricIndex + 1]) <= 0) {
+          lyricText = lyricsMap[lyricsKey[lyricIndex]];
+          break;
+        } else {
+          ++lyricIndex;
+        }
+      }
+      if (lyricIndex + 1 >= lyricsKey.length)
+        lyricText = lyricsMap[lyricsKey[lyricIndex]];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String name = playingSong.title;
@@ -130,6 +189,7 @@ class _PlayMusicState extends State<PlayMusic>
       String s = '${artist.substring(0, 30)}...';
       artist = s;
     }
+    process(position);
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     List<String> dur = duration.toString().split(':');
@@ -256,18 +316,29 @@ class _PlayMusicState extends State<PlayMusic>
               ),
               divider(h),
               Container(
+                width: width,
+                height: h * 0.05,
+                child: Text(
+                  "$lyricText",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: white),
+                ),
+              ),
+              Container(
                   width: width,
                   height: h * 0.05,
                   child: duration == null
                       ? Container()
                       : SliderTheme(
                           data: SliderTheme.of(context).copyWith(
-                              activeTrackColor: orange,
-                              thumbColor: orange,
-                              overlayColor: orange.withOpacity(0.2),
-                              inactiveTrackColor: orange.withOpacity(0.2),
-                              thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: 5.0)),
+                            activeTrackColor: orange,
+                            thumbColor: orange,
+                            overlayColor: orange.withOpacity(0.2),
+                            inactiveTrackColor: orange.withOpacity(0.2),
+                            thumbShape: RoundSliderThumbShape(
+                              enabledThumbRadius: 5.0,
+                            ),
+                          ),
                           child: Slider(
                               value: position?.inMilliseconds?.toDouble() ?? 0,
                               onChanged: (val) {

@@ -1,3 +1,5 @@
+import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -57,7 +59,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     tabController = new TabController(length: 2, vsync: this, initialIndex: 0);
-    shuffleList = List();
+    shuffleList = [];
     setState(() {
       listfetched = false;
       playerState = PlayerState.stopped;
@@ -449,7 +451,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
                         await MyNotification.hideNotification();
                         pause();
                       } else {
-                        print("==========================${playingSong.albumArt}");
+                        print(
+                            "==========================${playingSong.albumArt}");
                         await MyNotification.showNotification(
                           playingSong.artist,
                           playingSong.title,
@@ -630,7 +633,7 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     if (rs == 1) {
       playerState = PlayerState.playing;
       bool isPlaying = playerState == PlayerState.paused ? false : true;
-       print("==========================${song.albumArt}");
+      print("==========================${song.albumArt}");
       await MyNotification.showNotification(
         song.artist,
         song.title,
@@ -684,19 +687,6 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
       });
     });
   }
-
-  // int randomSong() {
-  //   Random random = new Random();
-  //   int newi = random.nextInt(songs.length);
-  //   setState(() {
-  //     if (start) {
-  //       start = false;
-  //     }
-  //     playingIndex = newi;
-  //     playingSong = songs[newi];
-  //   });
-  //   return newi;
-  // }
 
   int nextSong(int i, bool fromCompletion, PlayMode pm) {
     int newi;
