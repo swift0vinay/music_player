@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:music_player/screens/detailsPage.dart';
-import 'package:music_player/services/songModel.dart';
-import 'package:share/share.dart';
 
 String boxName = 'music_player';
 double h, w;

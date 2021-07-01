@@ -1,22 +1,8 @@
-import 'dart:io';
-import 'dart:math';
-
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/constants.dart';
 import 'package:music_player/screens/bottomSheet.dart';
-import 'package:music_player/screens/detailsPage.dart';
-import 'package:flutter/services.dart';
-import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/screens/loader.dart';
-import 'package:music_player/services/notification.dart';
-import 'package:music_player/navigation/playMusic.dart';
-import 'package:music_player/screens/previewLogo.dart';
-import 'package:music_player/services/scanMusic.dart';
 import 'package:music_player/services/songModel.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHome extends StatefulWidget {

@@ -1,5 +1,3 @@
-import 'dart:collection';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -8,7 +6,6 @@ import 'package:hive/hive.dart';
 import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/navigation/homePage.dart';
 import 'package:music_player/screens/loader.dart';
-import 'package:music_player/screens/newLoad.dart';
 import 'package:music_player/services/notification.dart';
 import 'package:music_player/navigation/playMusic.dart';
 import 'package:music_player/playlist/playlistpage.dart';

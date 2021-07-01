@@ -28,7 +28,6 @@ class SearchSong extends SearchDelegate<Song> {
 
   @override
   ThemeData appBarTheme(BuildContext context) {
-    // TODO: implement appBarTheme
     final ThemeData theme = ThemeData(
         brightness: Brightness.dark,
         accentColor: white,
@@ -37,14 +36,10 @@ class SearchSong extends SearchDelegate<Song> {
   }
 
   @override
-  // TODO: implement searchFieldLabel
   String get searchFieldLabel => "Search Song";
   @override
-  // TODO: implement searchFieldStyle
   TextStyle get searchFieldStyle => TextStyle(color: white, fontSize: 15);
-
   @override
-  // TODO: implement textInputAction
   TextInputAction get textInputAction => TextInputAction.search;
 
   @override
