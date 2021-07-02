@@ -282,7 +282,8 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
     print(shuffleList);
     return WillPopScope(
       onWillPop: onWillPop,
-      child: Scaffold(
+      child: SafeArea(
+        child: Scaffold(
           key: tabKey,
           backgroundColor: black,
           appBar: AppBar(
@@ -348,28 +349,33 @@ class MainNavState extends State<MainNav> with TickerProviderStateMixin {
             ),
           ),
           bottomNavigationBar: bottomContainer(listfetched, height, width),
-          body: TabBarView(
-            controller: tabController,
-            children: [
-              listfetched
-                  ? MyHome(
-                      showPlayer: showPlayer,
-                      songs: songs,
-                      startMusic: startMusic,
-                      playingIndex: playingIndex,
-                      playingSong: playingSong,
-                      playerState: playerState,
-                      listFetched: listfetched,
-                    )
-                  : Loader2(),
-              listfetched
-                  ? Playlist(
-                      songs: songs,
-                      playingSong: playingSong,
-                    )
-                  : Loader2(),
-            ],
-          )),
+          body: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle.light,
+            child: TabBarView(
+              controller: tabController,
+              children: [
+                listfetched
+                    ? MyHome(
+                        showPlayer: showPlayer,
+                        songs: songs,
+                        startMusic: startMusic,
+                        playingIndex: playingIndex,
+                        playingSong: playingSong,
+                        playerState: playerState,
+                        listFetched: listfetched,
+                      )
+                    : Loader2(),
+                listfetched
+                    ? Playlist(
+                        songs: songs,
+                        playingSong: playingSong,
+                      )
+                    : Loader2(),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

@@ -60,51 +60,49 @@ class _MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     playerState = this.widget.playerState;
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: black,
-        key: key,
-        body: this.widget.listFetched
-            ? Column(
-                children: [
-                  this.widget.songs.isEmpty
-                      ? Center(
-                          child: Text(
-                          "No Songs Found",
-                          style: TextStyle(color: white),
-                        ))
-                      : Expanded(
-                          child: ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 15.0),
-                            shrinkWrap: true,
-                            controller: scrollController,
-                            itemCount: this.widget.songs.length,
-                            itemBuilder: (context, i) {
-                              String name = this.widget.songs[i].title;
-                              String artist = this.widget.songs[i].artist;
-                              bool played = playingIndex == i ? true : false;
-                              if (name.length > 27) {
-                                String s = '${name.substring(0, 28)}...';
-                                name = s;
-                              }
-                              if (artist.length > 30) {
-                                String s = '${artist.substring(0, 31)}...';
-                                artist = s;
-                              }
-                              return musicTile(
-                                played,
-                                i,
-                                name,
-                                artist,
-                                context,
-                              );
-                            },
-                          ),
+    return Scaffold(
+      backgroundColor: black,
+      key: key,
+      body: this.widget.listFetched
+          ? Column(
+              children: [
+                this.widget.songs.isEmpty
+                    ? Center(
+                        child: Text(
+                        "No Songs Found",
+                        style: TextStyle(color: white),
+                      ))
+                    : Expanded(
+                        child: ListView.builder(
+                          padding: EdgeInsets.symmetric(horizontal: 15.0),
+                          shrinkWrap: true,
+                          controller: scrollController,
+                          itemCount: this.widget.songs.length,
+                          itemBuilder: (context, i) {
+                            String name = this.widget.songs[i].title;
+                            String artist = this.widget.songs[i].artist;
+                            bool played = playingIndex == i ? true : false;
+                            if (name.length > 27) {
+                              String s = '${name.substring(0, 28)}...';
+                              name = s;
+                            }
+                            if (artist.length > 30) {
+                              String s = '${artist.substring(0, 31)}...';
+                              artist = s;
+                            }
+                            return musicTile(
+                              played,
+                              i,
+                              name,
+                              artist,
+                              context,
+                            );
+                          },
                         ),
-                ],
-              )
-            : Loader2(),
-      ),
+                      ),
+              ],
+            )
+          : Loader2(),
     );
   }
 

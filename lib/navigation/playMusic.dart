@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:music_player/screens/bottomSheet.dart';
+import 'package:music_player/screens/lyricDownload.dart';
 import 'package:music_player/services/MediaPlayer.dart';
 import 'package:music_player/screens/previewLogo.dart';
 import 'package:music_player/services/songModel.dart';
@@ -57,6 +58,8 @@ class _PlayMusicState extends State<PlayMusic>
   Duration position;
   int playingIndex;
   bool start;
+  String lyricText = "";
+
   _PlayMusicState({
     this.duration,
     this.position,
@@ -75,6 +78,7 @@ class _PlayMusicState extends State<PlayMusic>
   void initState() {
     super.initState();
     initSp();
+    lyricText = "";
     playingSong = this.widget.song;
     playingIndex = this.widget.index;
     playerState = this.widget.playerState;
@@ -161,7 +165,6 @@ class _PlayMusicState extends State<PlayMusic>
     }
   }
 
-  String lyricText = "";
   process(Duration position) {
     if (lyricFound) {
       String z = position.toString();
@@ -213,17 +216,38 @@ class _PlayMusicState extends State<PlayMusic>
                           letterSpacing: 0.5,
                         ),
                       ),
-                      InkWell(
-                        onTap: () {
-                          if (!lyricFound) {
-                            execution();
-                          }
-                        },
-                        child: Icon(
-                          Icons.refresh,
-                          color: white,
-                          size: 20.0,
-                        ),
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return LyricDownload();
+                                  });
+                            },
+                            child: Icon(
+                              Icons.info_outline,
+                              color: white,
+                              size: 20.0,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          InkWell(
+                            onTap: () {
+                              if (!lyricFound) {
+                                execution();
+                              }
+                            },
+                            child: Icon(
+                              Icons.refresh,
+                              color: white,
+                              size: 20.0,
+                            ),
+                          ),
+                        ],
                       )
                     ],
                   ),
@@ -241,9 +265,11 @@ class _PlayMusicState extends State<PlayMusic>
                 fit: BoxFit.scaleDown,
                 child: Center(
                   child: Text(
-                    "${lyricText.trim()}",
+                    lyricText == null
+                        ? '\u266b \u266b \u266b \u266b'
+                        : "${lyricText?.trim()}",
                     style: TextStyle(
-                      fontSize: 12.0,
+                      fontSize: lyricText == null ? 18.0 : 12.0,
                       color: white,
                       letterSpacing: 1,
                     ),
